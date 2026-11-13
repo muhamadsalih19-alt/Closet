@@ -1,7 +1,7 @@
 // A simple outfit picker that works with no API key, so the app is useful from day one.
 // Weather and season are deliberately ignored: every piece is available every day.
 import { wearStats } from './ai';
-import type { Item, Suggestion, WearLog } from './types';
+import { occasionLabel, type Item, type Suggestion, type WearLog } from './types';
 
 const NEUTRALS = ['black', 'white', 'grey', 'gray', 'cream', 'beige', 'navy', 'denim', 'tan', 'camel', 'brown', 'ivory', 'khaki', 'charcoal', 'olive'];
 const isNeutral = (c: string) => NEUTRALS.some((n) => c.toLowerCase().includes(n));
@@ -91,7 +91,7 @@ export function localOutfits(items: Item[], wears: WearLog[], occasion: string, 
     seen.add(key);
     const main = chosen.find((c) => c.category !== 'shoes' && c.category !== 'bag') ?? chosen[0];
     out.push({
-      title: `${occasion} look`,
+      title: `${occasionLabel(occasion)} outfit`,
       itemIds: chosen.map((c) => c.id),
       why: `Built around your ${main.name.toLowerCase()}.`,
       tip: 'Add your API key in Settings for a real stylist’s picks and styling tips.',

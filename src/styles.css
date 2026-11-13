@@ -260,3 +260,11 @@ ul.clean { margin: 0; padding-left: 18px; display: flex; flex-direction: column;
 .dots span { width: 28px; height: 4px; border-radius: 99px; background: var(--line); }
 .dots span.on { background: var(--brand); }
 .draft .row { align-items: center; }
+
+.occasions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.occasion { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--surface); border: 1.5px solid var(--line); text-align: left; min-height: 64px; }
+.occasion.on { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.occasion-icon { font-size: 24px; flex: none; }
+.occasion-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.occasion-text strong { font-size: 15px; }
+.occasion-text span { font-size: 12px; opacity: 0.75; line-height: 1.25; }

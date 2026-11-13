@@ -4,7 +4,7 @@ import { useNav } from '../nav';
 import { suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
 import { dayKey } from '../lib/storage';
-import { OCCASIONS, type Suggestion } from '../lib/types';
+import { OCCASION_ORDER, occasionLabel, type Suggestion } from '../lib/types';
 import { Chip, ErrorNote, Sheet, Spinner } from '../components/ui';
 import SuggestionCard from '../components/SuggestionCard';
 
@@ -46,7 +46,7 @@ export default function StyleItem({ id }: { id: string }) {
     <Sheet title={`Ways to wear ${item?.name ?? 'this'}`} onClose={close}>
       <div className="stack">
         <div className="chips scroll">
-          {OCCASIONS.map((o) => <Chip key={o} on={occasion === o} onClick={() => { setOccasion(o); run(o); }}>{o}</Chip>)}
+          {OCCASION_ORDER.map((o) => <Chip key={o} on={occasion === o} onClick={() => { setOccasion(o); run(o); }}>{occasionLabel(o)}</Chip>)}
         </div>
         {busy && <Spinner label="Building looks around it…" />}
         <ErrorNote msg={err} />

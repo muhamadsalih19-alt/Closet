@@ -3,7 +3,7 @@ import { useStore } from '../state';
 import { useNav } from '../nav';
 import { logWear, saveOutfit, setPlan } from '../lib/actions';
 import { dayKey, uid } from '../lib/storage';
-import { CATEGORIES, CATEGORY_LABEL, OCCASIONS } from '../lib/types';
+import { CATEGORIES, CATEGORY_LABEL, OCCASION_ORDER, occasionLabel } from '../lib/types';
 import { Chip, ItemTile, OutfitBoard, Sheet, useShareOutfit } from '../components/ui';
 
 export default function OutfitEditor({ id, itemIds, name, occasion }: { id?: string; itemIds?: string[]; name?: string; occasion?: string }) {
@@ -38,7 +38,7 @@ export default function OutfitEditor({ id, itemIds, name, occasion }: { id?: str
         <label className="field">
           <span>Occasion</span>
           <select value={occ} onChange={(e) => setOcc(e.target.value)}>
-            {OCCASIONS.map((o) => <option key={o}>{o}</option>)}
+            {OCCASION_ORDER.map((o) => <option key={o} value={o}>{occasionLabel(o)}</option>)}
           </select>
         </label>
 

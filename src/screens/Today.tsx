@@ -5,8 +5,8 @@ import { suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
 import { dayKey } from '../lib/storage';
 import { logWear } from '../lib/actions';
-import { OCCASIONS, type Suggestion } from '../lib/types';
-import { Chip, Empty, ErrorNote, OutfitBoard, Spinner } from '../components/ui';
+import { OCCASION_INFO, OCCASION_ORDER, type Suggestion } from '../lib/types';
+import { Empty, ErrorNote, OutfitBoard, Spinner } from '../components/ui';
 import SuggestionCard from '../components/SuggestionCard';
 
 const CACHE = 'drape-today';
@@ -27,6 +27,7 @@ export default function Today() {
   const cached = useMemo(readCache, []);
   const [occasion, setOccasion] = useState(cached?.occasion ?? 'Everyday');
   const [extra, setExtra] = useState('');
+  const [showAll, setShowAll] = useState(() => OCCASION_ORDER.indexOf(cached?.occasion ?? 'Everyday') >= 6);
   const [list, setList] = useState<Suggestion[]>(cached?.list ?? []);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -107,12 +108,22 @@ export default function Today() {
         </Empty>
       ) : (
         <section className="stack-sm">
-          <h2>What’s the plan today?</h2>
-          <div className="chips scroll">
-            {OCCASIONS.map((o) => <Chip key={o} on={occasion === o} onClick={() => setOccasion(o)}>{o}</Chip>)}
+          <h2>Where are you going today?</h2>
+          <p className="muted small">Pick the one closest to your day.</p>
+          <div className="occasions" role="radiogroup" aria-label="Where are you going today?">
+            {OCCASION_ORDER.slice(0, showAll ? undefined : 6).map((o) => (
+              <button key={o} type="button" role="radio" aria-checked={occasion === o} className={'occasion' + (occasion === o ? ' on' : '')} onClick={() => setOccasion(o)}>
+                <span className="occasion-icon" aria-hidden>{OCCASION_INFO[o].icon}</span>
+                <span className="occasion-text">
+                  <strong>{OCCASION_INFO[o].label}</strong>
+                  <span>{OCCASION_INFO[o].hint}</span>
+                </span>
+              </button>
+            ))}
           </div>
+          {!showAll && <button className="link small center" onClick={() => setShowAll(true)}>More options (gym, wedding, interview…)</button>}
           {ai.apiKey && (
-            <input value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Anything else? e.g. “lots of walking”, “wear my new boots”" aria-label="Extra request" />
+            <input value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Anything else? (optional) e.g. “I’ll be walking a lot”" aria-label="Anything else your stylist should know" />
           )}
           <button className="btn primary big" disabled={busy} onClick={() => styleMe(false)}>
             {list.length ? '↻ New picks' : '✦ Style me'}

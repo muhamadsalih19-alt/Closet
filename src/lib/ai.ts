@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import * as z from 'zod';
 import { dataUrlParts } from './images';
-import { CATEGORIES, SEASONS, type ChatMsg, type Feedback, type Item, type StyleProfile, type Suggestion, type WearLog } from './types';
+import { CATEGORIES, SEASONS, occasionForAi, type ChatMsg, type Feedback, type Item, type StyleProfile, type Suggestion, type WearLog } from './types';
 
 export const MODELS = [
   { id: 'claude-opus-5-5', label: 'Claude Opus 5.5 — best taste (default)' },
@@ -136,7 +136,8 @@ Rules:
 - Dress for the occasion. Match formality across pieces unless the contrast is deliberate.
 - Weather and season are not factors: every piece is available every day. Never rule out jackets, coats, knits, long sleeves or trousers because of heat or season, and use layering freely.
 - Respect their style profile and taste feedback. Prefer pieces they have not worn recently, and bring out neglected pieces when they fit.
-- Be specific and confident, like a friend with great taste. Plain language, no markdown, no emoji.`;
+- Be specific and confident, like a friend with great taste. No markdown, no emoji.
+- They are not into fashion. Use everyday words a teenager would understand, and short sentences. Avoid fashion jargon (for example elevated, silhouette, capsule, statement piece, tonal, monochrome, proportions, smart casual). If a fashion word is truly needed, explain it in a few words. Outfit names should be simple and obvious, like "Easy weekend look" or "Clean office outfit".`;
 
 // ---------- Tagging a new piece ----------
 
@@ -202,7 +203,7 @@ export async function suggestOutfits(ctx: AiCtx, r: OutfitRequest): Promise<{ ou
   const anchor = r.anchorId ? `\nEvery outfit must include item ${r.anchorId}.` : '';
   const avoid = r.avoid?.length ? `\nDo not repeat these combinations: ${r.avoid.map((a) => a.join('+')).join('; ')}` : '';
   const content = `Date: ${r.date}
-Occasion: ${r.occasion}
+Occasion: ${occasionForAi(r.occasion)}
 ${r.extra ? `Extra request: ${r.extra}\n` : ''}
 Style profile:
 ${profileBrief(r.profile)}
@@ -240,7 +241,7 @@ export async function planWeek(
   const content = `Plan one outfit per day. Avoid repeating the same main pieces on back-to-back days, but re-wearing jeans or shoes across the week is fine.
 
 Days:
-${r.days.map((d) => `${d.date} — ${d.occasion}`).join('\n')}
+${r.days.map((d) => `${d.date} — ${occasionForAi(d.occasion)}`).join('\n')}
 
 Style profile:
 ${profileBrief(r.profile)}
@@ -300,7 +301,7 @@ const GlowSchema = z.object({
 export type GlowResult = z.infer<typeof GlowSchema>;
 
 export async function glowUp(ctx: AiCtx, photo: string, occasion: string, items: Item[], wears: WearLog[], profile: StyleProfile) {
-  const content = `Occasion: ${occasion || 'not specified'}
+  const content = `Occasion: ${occasion ? occasionForAi(occasion) : 'not specified'}
 
 Style profile:
 ${profileBrief(profile)}

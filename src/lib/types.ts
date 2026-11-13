@@ -20,6 +20,30 @@ export type Season = (typeof SEASONS)[number];
 
 export const OCCASIONS = ['Everyday', 'Work', 'Smart casual', 'Date night', 'Going out', 'Formal event', 'Workout', 'Travel', 'Lounging at home', 'Interview', 'Wedding guest', 'Brunch'] as const;
 
+/** Plain-language names for the occasions. The ids above stay the same so saved outfits keep matching. */
+export const OCCASION_INFO: Record<string, { icon: string; label: string; hint: string }> = {
+  Everyday: { icon: '🚶', label: 'Normal day', hint: 'Errands, uni, hanging out' },
+  Work: { icon: '💼', label: 'Work', hint: 'Office or meetings' },
+  'Smart casual': { icon: '☕', label: 'A bit nicer', hint: 'Nice café, mall, meeting friends' },
+  Brunch: { icon: '🍳', label: 'Food out', hint: 'Brunch, lunch or a relaxed dinner' },
+  'Date night': { icon: '❤️', label: 'Date', hint: 'Look good, still comfy' },
+  'Going out': { icon: '🎉', label: 'Night out', hint: 'Party, club, birthday' },
+  'Formal event': { icon: '🤵', label: 'Fancy event', hint: 'Gala, awards, suit-and-tie' },
+  'Wedding guest': { icon: '💍', label: 'Wedding', hint: 'Going as a guest' },
+  Interview: { icon: '🤝', label: 'Job interview', hint: 'Make a good first impression' },
+  Workout: { icon: '🏋️', label: 'Gym or sport', hint: 'Training, running, football' },
+  Travel: { icon: '✈️', label: 'Travelling', hint: 'Flight or long trip, comfort first' },
+  'Lounging at home': { icon: '🛋️', label: 'Staying in', hint: 'Relaxing at home' },
+};
+
+/** Occasions in the order they're shown: most common first. */
+export const OCCASION_ORDER = Object.keys(OCCASION_INFO);
+
+export const occasionLabel = (id: string) => OCCASION_INFO[id]?.label ?? id;
+
+/** What the stylist is told: the plain name plus an example. */
+export const occasionForAi = (id: string) => (OCCASION_INFO[id] ? `${OCCASION_INFO[id].label} (${OCCASION_INFO[id].hint})` : id);
+
 export type ItemStatus = 'owned' | 'wishlist' | 'archived';
 
 export interface Item {

@@ -6,7 +6,7 @@ import { fileToDataUrl } from '../lib/images';
 import { fetchWeather, searchPlaces, weatherBrief } from '../lib/weather';
 import { saveOutfit } from '../lib/actions';
 import { uid } from '../lib/storage';
-import { OCCASIONS, type ChatMsg } from '../lib/types';
+import { OCCASION_ORDER, occasionLabel, type ChatMsg } from '../lib/types';
 import { ErrorNote, ItemPhoto, OutfitBoard, PhotoButton, Sheet, Spinner, shopUrl } from '../components/ui';
 
 type Tool = 'glow' | 'finder' | 'pack' | null;
@@ -174,7 +174,7 @@ function GlowUp({ onClose }: { onClose: () => void }) {
           <PhotoButton className="btn grow" label="🖼️ Upload" onFiles={async ([f]) => setPhoto(await fileToDataUrl(f, 1200))} />
         </div>
         <select value={occ} onChange={(e) => setOcc(e.target.value)} aria-label="Occasion">
-          {OCCASIONS.map((o) => <option key={o}>{o}</option>)}
+          {OCCASION_ORDER.map((o) => <option key={o} value={o}>{occasionLabel(o)}</option>)}
         </select>
         <button className="btn primary big" disabled={!photo || t.busy} onClick={() => photo && t.run(() => glowUp(ai, photo, occ, data.items, data.wears, data.profile))}>✨ Glow me up</button>
         {t.busy && <Spinner label="Taking a good look…" />}

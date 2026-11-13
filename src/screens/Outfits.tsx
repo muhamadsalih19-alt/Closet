@@ -5,7 +5,7 @@ import { planWeek, suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
 import { addDays, dayKey, parseDay } from '../lib/storage';
 import { logWear, setPlan } from '../lib/actions';
-import { OCCASIONS } from '../lib/types';
+import { OCCASION_ORDER, occasionLabel } from '../lib/types';
 import { Chip, Empty, ErrorNote, ItemPhoto, OutfitBoard, Sheet, Spinner } from '../components/ui';
 
 type View = 'saved' | 'planner' | 'history';
@@ -51,14 +51,14 @@ function Saved() {
       <div className="chips scroll">
         <Chip on={occ === 'all'} onClick={() => setOcc('all')}>All</Chip>
         <Chip on={occ === 'fav'} onClick={() => setOcc('fav')}>♥ Favourites</Chip>
-        {occs.map((o) => <Chip key={o} on={occ === o} onClick={() => setOcc(o)}>{o}</Chip>)}
+        {occs.map((o) => <Chip key={o} on={occ === o} onClick={() => setOcc(o)}>{occasionLabel(o)}</Chip>)}
       </div>
       {list.map((o) => (
         <article key={o.id} className="card">
           <div className="row between">
             <div>
               <h3>{o.name}</h3>
-              <span className="muted small">{o.occasion}{o.source === 'ai' ? ' · by your stylist' : ''}</span>
+              <span className="muted small">{occasionLabel(o.occasion)}{o.source === 'ai' ? ' · by your stylist' : ''}</span>
             </div>
             <button className="icon-btn" aria-label="Favourite" onClick={() => update((d) => ({ ...d, outfits: d.outfits.map((x) => (x.id === o.id ? { ...x, favorite: !x.favorite } : x)) }))}>
               {o.favorite ? '♥' : '♡'}
@@ -170,7 +170,7 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
           <div className="stack-sm">
             <h3>{plan ? 'Replan this day' : 'Plan this day'}</h3>
             <select value={occ} onChange={(e) => setOcc(e.target.value)} aria-label="Occasion">
-              {OCCASIONS.map((o) => <option key={o}>{o}</option>)}
+              {OCCASION_ORDER.map((o) => <option key={o} value={o}>{occasionLabel(o)}</option>)}
             </select>
             <button className="btn primary" disabled={busy} onClick={styleDay}>✦ Let my stylist pick</button>
             {busy && <Spinner label="Picking…" />}
@@ -189,7 +189,7 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
                   toast(past ? 'Logged' : 'Planned');
                 }}
               >
-                {o.name} <span className="muted small">· {o.occasion}</span>
+                {o.name} <span className="muted small">· {occasionLabel(o.occasion)}</span>
               </button>
             ))}
           </div>
@@ -218,7 +218,7 @@ function WeekSheet({ onClose }: { onClose: () => void }) {
       } else {
         update((d) => days.reduce((acc, day) => {
           const s = localOutfits(acc.items, acc.wears, day.occasion, 1)[0];
-          return s ? setPlan(acc, day.date, s.itemIds, `${day.occasion} look`) : acc;
+          return s ? setPlan(acc, day.date, s.itemIds, `${occasionLabel(day.occasion)} outfit`) : acc;
         }, d));
       }
       toast('Your week is planned');
@@ -241,7 +241,7 @@ function WeekSheet({ onClose }: { onClose: () => void }) {
                 <strong>{parseDay(d).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}</strong>
               </span>
               <select className="inline" value={occs[i]} onChange={(e) => setOccs(occs.map((o, j) => (j === i ? e.target.value : o)))} aria-label={`Occasion for ${d}`}>
-                {OCCASIONS.map((o) => <option key={o}>{o}</option>)}
+                {OCCASION_ORDER.map((o) => <option key={o} value={o}>{occasionLabel(o)}</option>)}
               </select>
             </div>
           );
@@ -270,7 +270,7 @@ function History() {
         <article key={w.id} className="card">
           <div className="row between">
             <h3>{parseDay(w.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</h3>
-            {w.occasion && <span className="pill">{w.occasion}</span>}
+            {w.occasion && <span className="pill">{occasionLabel(w.occasion)}</span>}
           </div>
           <OutfitBoard itemIds={w.itemIds} onItem={(id) => open({ kind: 'item', id })} />
         </article>
