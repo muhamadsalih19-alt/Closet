@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../state';
 import { Chip } from '../components/ui';
-import LocationPicker from '../components/LocationPicker';
 import type { StyleProfile } from '../lib/types';
 
 export const STYLE_OPTIONS = ['Minimalist', 'Classic', 'Casual', 'Streetwear', 'Preppy', 'Boho', 'Romantic', 'Edgy', 'Sporty', 'Smart / tailored', 'Vintage', 'Y2K', 'Scandi', 'Old money', 'Coastal', 'Grunge', 'Avant-garde', 'Workwear'];
@@ -10,11 +9,10 @@ export default function Welcome() {
   const { data, update } = useStore();
   const [step, setStep] = useState(0);
   const [p, setP] = useState<StyleProfile>(data.profile);
-  const [place, setPlace] = useState(data.settings.place);
   const [key, setKey] = useState(data.settings.apiKey);
 
   const finish = () =>
-    update((d) => ({ ...d, profile: { ...p, onboarded: true }, settings: { ...d.settings, place, apiKey: key.trim() } }));
+    update((d) => ({ ...d, profile: { ...p, onboarded: true }, settings: { ...d.settings, apiKey: key.trim() } }));
 
   return (
     <main className="page welcome">
@@ -29,7 +27,7 @@ export default function Welcome() {
           <p className="lead">Your whole closet in your pocket, and a stylist who picks your outfit every morning — from clothes you already own.</p>
           <ul className="ticks">
             <li>Snap your clothes; AI tags them for you</li>
-            <li>Daily outfits matched to the weather and your plans</li>
+            <li>Daily outfits matched to your plans and your taste</li>
             <li>Glow Up feedback, look recreation, packing lists and more</li>
             <li>Every feature free. Your photos stay on this phone.</li>
           </ul>
@@ -92,12 +90,7 @@ export default function Welcome() {
 
       {step === 3 && (
         <section className="stack">
-          <h2>Weather & AI</h2>
-          <div className="card stack-sm">
-            <h3>Where are you?</h3>
-            <p className="muted small">So outfits suit today’s weather. Used only to fetch the forecast.</p>
-            <LocationPicker value={place} onChange={setPlace} />
-          </div>
+          <h2>Your AI stylist</h2>
           <div className="card stack-sm">
             <h3>Claude API key</h3>
             <p className="muted small">

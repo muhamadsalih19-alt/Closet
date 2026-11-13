@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { EMPTY, loadData, loadImages, saveData, saveImage, deleteImage, type AppData } from './lib/storage';
-import { fetchWeather, type Weather } from './lib/weather';
 import type { AiCtx } from './lib/ai';
 
 interface Store {
@@ -9,9 +8,6 @@ interface Store {
   update: (fn: (d: AppData) => AppData) => void;
   setImage: (id: string, dataUrl: string | null) => Promise<void>;
   replaceAll: (data: AppData, images: Record<string, string>) => Promise<void>;
-  weather: Weather | null;
-  weatherError: string;
-  refreshWeather: () => void;
   ai: AiCtx;
   toast: (msg: string) => void;
 }
@@ -27,8 +23,6 @@ export function useStore(): Store {
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData | null>(null);
   const [images, setImages] = useState<Record<string, string>>({});
-  const [weather, setWeather] = useState<Weather | null>(null);
-  const [weatherError, setWeatherError] = useState('');
   const [toastMsg, setToastMsg] = useState('');
   const toastTimer = useRef<number>(0);
 
@@ -42,19 +36,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (data) saveData(data);
   }, [data]);
-
-  const place = data?.settings.place;
-  const refreshWeather = useCallback(() => {
-    if (!place) return;
-    setWeatherError('');
-    fetchWeather(place)
-      .then(setWeather)
-      .catch((e) => setWeatherError(e instanceof Error ? e.message : 'Weather unavailable'));
-  }, [place]);
-
-  useEffect(() => {
-    refreshWeather();
-  }, [refreshWeather]);
 
   const update = useCallback((fn: (d: AppData) => AppData) => setData((d) => fn(d ?? EMPTY)), []);
 
@@ -89,9 +70,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     update,
     setImage,
     replaceAll,
-    weather,
-    weatherError,
-    refreshWeather,
     ai: { apiKey: data.settings.apiKey, model: data.settings.model },
     toast,
   };

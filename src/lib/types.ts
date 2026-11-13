@@ -96,8 +96,6 @@ export interface Place {
 export interface Settings {
   apiKey: string;
   model: string;
-  tempUnit: 'C' | 'F';
-  place: Place | null;
 }
 
 export interface ChatMsg {

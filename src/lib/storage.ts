@@ -4,8 +4,6 @@ import type { ChatMsg, Feedback, Item, Outfit, Plan, Settings, StyleProfile, Wea
 export const DEFAULT_SETTINGS: Settings = {
   apiKey: '',
   model: 'claude-opus-5-5',
-  tempUnit: navigator.language === 'en-US' ? 'F' : 'C',
-  place: null,
 };
 
 export const DEFAULT_PROFILE: StyleProfile = {

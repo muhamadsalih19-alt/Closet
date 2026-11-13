@@ -1,7 +1,7 @@
 // A simple outfit picker that works with no API key, so the app is useful from day one.
+// Weather and season are deliberately ignored: every piece is available every day.
 import { wearStats } from './ai';
-import type { DayWeather } from './weather';
-import type { Item, Season, Suggestion, WearLog } from './types';
+import type { Item, Suggestion, WearLog } from './types';
 
 const NEUTRALS = ['black', 'white', 'grey', 'gray', 'cream', 'beige', 'navy', 'denim', 'tan', 'camel', 'brown', 'ivory', 'khaki', 'charcoal', 'olive'];
 const isNeutral = (c: string) => NEUTRALS.some((n) => c.toLowerCase().includes(n));
@@ -21,14 +21,6 @@ const OCCASION_FORMALITY: Record<string, [number, number]> = {
   Brunch: [2, 3],
 };
 
-export function seasonFor(d: DayWeather | undefined): Season | null {
-  if (!d) return null;
-  const avg = (d.max + d.min) / 2;
-  if (avg >= 22) return 'summer';
-  if (avg <= 8) return 'winter';
-  return new Date().getMonth() >= 6 ? 'autumn' : 'spring';
-}
-
 function pick<T>(arr: T[], score: (t: T) => number): T | undefined {
   if (!arr.length) return undefined;
   const scored = arr.map((t) => ({ t, s: score(t) + Math.random() * 2 }));
@@ -36,30 +28,22 @@ function pick<T>(arr: T[], score: (t: T) => number): T | undefined {
   return scored[0].t;
 }
 
-export function localOutfits(items: Item[], wears: WearLog[], occasion: string, weather: DayWeather | undefined, count = 3, anchorId?: string): Suggestion[] {
+export function localOutfits(items: Item[], wears: WearLog[], occasion: string, count = 3, anchorId?: string): Suggestion[] {
   const stats = wearStats(wears);
   const today = new Date().toISOString().slice(0, 10);
-  const season = seasonFor(weather);
   const [fmin, fmax] = OCCASION_FORMALITY[occasion] ?? [1, 5];
   const pool = items.filter((i) => i.status === 'owned' && !i.inLaundry);
-  const ok = (i: Item) => (season ? !i.seasons.length || i.seasons.includes(season) : true);
   const baseScore = (i: Item) => {
     let s = 0;
     if (i.formality >= fmin && i.formality <= fmax) s += 4;
     else s -= Math.min(Math.abs(i.formality - fmin), Math.abs(i.formality - fmax)) * 2;
-    if (ok(i)) s += 2;
     const st = stats[i.id];
     if (!st) s += 1.5;
-    else {
-      const daysAgo = (Date.parse(today) - Date.parse(st.last)) / 86400000;
-      if (daysAgo < 3) s -= 4;
-    }
+    else if ((Date.parse(today) - Date.parse(st.last)) / 86400000 < 3) s -= 4;
     if (i.favorite) s += 1;
     return s;
   };
   const by = (cat: string) => pool.filter((i) => i.category === cat || (occasion === 'Workout' && cat !== 'shoes' && i.category === 'activewear'));
-  const cold = weather ? weather.max < 16 : false;
-  const wet = weather ? weather.rainChance >= 50 : false;
   const anchor = anchorId ? pool.find((i) => i.id === anchorId) : undefined;
 
   const out: Suggestion[] = [];
@@ -89,10 +73,11 @@ export function localOutfits(items: Item[], wears: WearLog[], occasion: string, 
       }
     }
     if (!has('shoes')) {
-      const s = pick(by('shoes'), (i) => score(i) + (wet && /boot|waterproof/i.test(i.subcategory + i.name) ? 2 : 0));
+      const s = pick(by('shoes'), score);
       if (s) chosen.push(s);
     }
-    if ((cold || wet) && !has('outerwear')) {
+    // A jacket or layer about half the time, whatever the weather.
+    if (!has('outerwear') && Math.random() < 0.5) {
       const o = pick(by('outerwear'), score);
       if (o) chosen.push(o);
     }
@@ -108,7 +93,7 @@ export function localOutfits(items: Item[], wears: WearLog[], occasion: string, 
     out.push({
       title: `${occasion} look`,
       itemIds: chosen.map((c) => c.id),
-      why: `Built around your ${main.name.toLowerCase()}${weather ? `, picked for ${Math.round(weather.max)}° and ${weather.rainChance}% rain` : ''}.`,
+      why: `Built around your ${main.name.toLowerCase()}.`,
       tip: 'Add your API key in Settings for a real stylist’s picks and styling tips.',
     });
   }

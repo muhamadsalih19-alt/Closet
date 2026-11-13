@@ -55,7 +55,7 @@ const STARTERS = [
 ];
 
 function Chat() {
-  const { data, update, weather, ai } = useStore();
+  const { data, update, ai } = useStore();
   const { open } = useNav();
   const [text, setText] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -78,7 +78,7 @@ function Chat() {
     setPhoto(null);
     setBusy(true);
     try {
-      const r = await chat(ai, history, data.items, data.wears, data.profile, weatherBrief(weather?.days[0], weather?.now));
+      const r = await chat(ai, history, data.items, data.wears, data.profile);
       update((d) => ({ ...d, chat: [...d.chat, { role: 'assistant' as const, text: r.reply, itemIds: r.itemIds, outfits: r.outfits }].slice(-40) }));
     } catch (e) {
       setErr(friendlyError(e));

@@ -3,32 +3,30 @@ import { useStore } from '../state';
 import { useNav } from '../nav';
 import { suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
-import { weatherBrief } from '../lib/weather';
 import { dayKey } from '../lib/storage';
 import { OCCASIONS, type Suggestion } from '../lib/types';
 import { Chip, ErrorNote, Sheet, Spinner } from '../components/ui';
 import SuggestionCard from '../components/SuggestionCard';
 
 export default function StyleItem({ id }: { id: string }) {
-  const { data, weather, ai } = useStore();
+  const { data, ai } = useStore();
   const { close } = useNav();
   const item = data.items.find((i) => i.id === id);
   const [occasion, setOccasion] = useState('Everyday');
   const [list, setList] = useState<Suggestion[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const wd = weather?.days[0];
 
   const run = async (occ: string) => {
     setErr('');
     setBusy(true);
     setList([]);
     try {
-      if (!ai.apiKey) setList(localOutfits(data.items, data.wears, occ, wd, 3, id));
+      if (!ai.apiKey) setList(localOutfits(data.items, data.wears, occ, 3, id));
       else {
         const r = await suggestOutfits(ai, {
           items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile,
-          weather: weatherBrief(wd, weather?.now), occasion: occ, date: dayKey(), anchorId: id,
+          occasion: occ, date: dayKey(), anchorId: id,
         });
         setList(r.outfits);
       }

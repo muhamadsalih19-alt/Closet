@@ -171,11 +171,6 @@ select.inline { width: auto; padding: 6px 10px; font-size: 14px; }
 .board-label { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .suggestion .tip { font-size: 14px; color: var(--muted); }
 
-.weather { flex-direction: row; justify-content: space-between; align-items: center; }
-.weather-main { display: flex; align-items: center; gap: 12px; }
-.weather-icon { font-size: 38px; }
-.weather-temp { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }
-.weather-meta { min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
 
 .empty { text-align: center; padding: 28px 16px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
 .empty-icon { font-size: 44px; }
@@ -222,7 +217,6 @@ select.inline { width: auto; padding: 6px 10px; font-size: 14px; }
 .cal-day.planned { border-style: dashed; border-color: var(--brand); }
 .cal-day.worn { background: var(--brand-soft); }
 .cal-num { font-size: 12px; font-weight: 600; }
-.cal-wx { font-size: 14px; opacity: 0.7; }
 
 .tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .tool { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow); }

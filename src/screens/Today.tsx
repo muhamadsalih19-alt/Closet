@@ -3,7 +3,6 @@ import { useStore } from '../state';
 import { useNav } from '../nav';
 import { suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
-import { describe, fmtTemp, weatherBrief } from '../lib/weather';
 import { dayKey } from '../lib/storage';
 import { logWear } from '../lib/actions';
 import { OCCASIONS, type Suggestion } from '../lib/types';
@@ -22,8 +21,8 @@ function readCache(): { date: string; occasion: string; list: Suggestion[] } | n
 }
 
 export default function Today() {
-  const { data, update, weather, weatherError, ai, toast } = useStore();
-  const { open, go } = useNav();
+  const { data, update, ai, toast } = useStore();
+  const { open } = useNav();
   const today = dayKey();
   const cached = useMemo(readCache, []);
   const [occasion, setOccasion] = useState(cached?.occasion ?? 'Everyday');
@@ -42,10 +41,8 @@ export default function Today() {
   }, [list, occasion, today]);
 
   const owned = data.items.filter((i) => i.status === 'owned');
-  const wd = weather?.days.find((d) => d.date === today) ?? weather?.days[0];
   const plan = data.plans.find((p) => p.date === today);
   const worn = data.wears.find((w) => w.date === today);
-  const unit = data.settings.tempUnit;
   const hour = new Date().getHours();
   const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
@@ -55,7 +52,7 @@ export default function Today() {
     setBusy(true);
     try {
       if (!ai.apiKey) {
-        const res = localOutfits(data.items, data.wears, occasion, wd, 3);
+        const res = localOutfits(data.items, data.wears, occasion, 3);
         if (!res.length) setErr('Add a few tops, bottoms and shoes to your closet first.');
         setList(more ? [...list, ...res] : res);
       } else {
@@ -64,7 +61,6 @@ export default function Today() {
           wears: data.wears,
           feedback: data.feedback,
           profile: data.profile,
-          weather: weatherBrief(wd, weather?.now),
           occasion,
           date: today,
           extra,
@@ -87,26 +83,6 @@ export default function Today() {
         <h1>{hello}{data.profile.name ? `, ${data.profile.name}` : ''}</h1>
       </header>
 
-      {wd ? (
-        <section className="card weather">
-          <div className="weather-main">
-            <span className="weather-icon" aria-hidden>{describe(wd.code).icon}</span>
-            <div>
-              <div className="weather-temp">{weather?.now ? fmtTemp(weather.now.temp, unit) : fmtTemp(wd.max, unit)}</div>
-              <div className="muted small nowrap">{describe(wd.code).text} · {fmtTemp(wd.max, unit)} / {fmtTemp(wd.min, unit)}</div>
-            </div>
-          </div>
-          <div className="weather-meta small">
-            <span>💧 {wd.rainChance}%</span>
-            <span>💨 {Math.round(wd.wind)} km/h</span>
-            <span className="muted">{weather?.place.split(',')[0]}</span>
-          </div>
-        </section>
-      ) : (
-        <button className="card hint" onClick={() => go('me')}>
-          {weatherError || 'Add your location in Me → Settings so outfits match the weather.'}
-        </button>
-      )}
 
       {worn && (
         <section className="card">

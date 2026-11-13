@@ -5,7 +5,6 @@ import { auditCloset, friendlyError, testKey, wearStats, MODELS, type AuditResul
 import { clearAll, dayKey, addDays, exportBackup, parseBackup } from '../lib/storage';
 import { CATEGORIES, CATEGORY_LABEL, type StyleProfile } from '../lib/types';
 import { Chip, ErrorNote, ItemPhoto, Spinner, shopUrl } from '../components/ui';
-import LocationPicker from '../components/LocationPicker';
 import { STYLE_OPTIONS } from './Welcome';
 
 type View = 'insights' | 'profile' | 'settings';
@@ -216,7 +215,7 @@ function Profile() {
 }
 
 function SettingsView() {
-  const { data, images, update, replaceAll, refreshWeather, toast } = useStore();
+  const { data, images, update, replaceAll, toast } = useStore();
   const s = data.settings;
   const [key, setKey] = useState(s.apiKey);
   const [testing, setTesting] = useState(false);
@@ -279,17 +278,6 @@ function SettingsView() {
         </label>
       </section>
 
-      <section className="card stack-sm">
-        <h3>Location & weather</h3>
-        <LocationPicker value={s.place} onChange={(p) => { set({ place: p }); setTimeout(refreshWeather, 0); }} />
-        <div className="field">
-          <span>Temperature</span>
-          <div className="chips">
-            <Chip on={s.tempUnit === 'C'} onClick={() => set({ tempUnit: 'C' })}>°C</Chip>
-            <Chip on={s.tempUnit === 'F'} onClick={() => set({ tempUnit: 'F' })}>°F</Chip>
-          </div>
-        </div>
-      </section>
 
       <section className="card stack-sm">
         <h3>Your data</h3>

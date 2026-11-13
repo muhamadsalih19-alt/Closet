@@ -3,7 +3,6 @@ import { useStore } from '../state';
 import { useNav } from '../nav';
 import { planWeek, suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
-import { weatherBrief, describe, fmtTemp } from '../lib/weather';
 import { addDays, dayKey, parseDay } from '../lib/storage';
 import { logWear, setPlan } from '../lib/actions';
 import { OCCASIONS } from '../lib/types';
@@ -74,7 +73,7 @@ function Saved() {
 }
 
 function Planner() {
-  const { data, weather } = useStore();
+  const { data } = useStore();
   const [month, setMonth] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -103,11 +102,10 @@ function Planner() {
           const ids = wear?.itemIds ?? plan?.itemIds ?? [];
           const pieces = ids.map((x) => data.items.find((it) => it.id === x)).filter((it) => !!it);
           const lead = pieces.find((it) => it.category !== 'shoes' && it.category !== 'bag') ?? pieces[0];
-          const w = weather?.days.find((d) => d.date === c);
           return (
             <button key={i} className={'cal-day' + (c === today ? ' today' : '') + (wear ? ' worn' : plan ? ' planned' : '')} onClick={() => setDay(c)}>
               <span className="cal-num">{+c.slice(8)}</span>
-              {lead ? <ItemPhoto item={lead} size="sm" /> : w ? <span className="cal-wx">{describe(w.code).icon}</span> : null}
+              {lead && <ItemPhoto item={lead} size="sm" />}
             </button>
           );
         })}
@@ -120,14 +118,13 @@ function Planner() {
 }
 
 function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
-  const { data, update, weather, ai, toast } = useStore();
+  const { data, update, ai, toast } = useStore();
   const { open } = useNav();
   const [occ, setOcc] = useState('Everyday');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const wear = data.wears.find((w) => w.date === date);
   const plan = data.plans.find((p) => p.date === date);
-  const wd = weather?.days.find((d) => d.date === date);
   const past = date < dayKey();
   const label = parseDay(date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -136,8 +133,8 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
     setBusy(true);
     try {
       const s = ai.apiKey
-        ? (await suggestOutfits(ai, { items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile, weather: wd ? weatherBrief(wd) : 'Forecast not available yet — dress for typical weather this time of year.', occasion: occ, date, count: 1 })).outfits[0]
-        : localOutfits(data.items, data.wears, occ, wd, 1)[0];
+        ? (await suggestOutfits(ai, { items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile, occasion: occ, date, count: 1 })).outfits[0]
+        : localOutfits(data.items, data.wears, occ, 1)[0];
       if (!s) throw new Error('Add more clothes to your closet first.');
       update((d) => setPlan(d, date, s.itemIds, s.title, s.why));
     } catch (e) {
@@ -150,7 +147,6 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
   return (
     <Sheet title={label} onClose={onClose}>
       <div className="stack">
-        {wd && <p className="muted">{describe(wd.code).icon} {describe(wd.code).text}, {fmtTemp(wd.max, data.settings.tempUnit)} / {fmtTemp(wd.min, data.settings.tempUnit)}, {wd.rainChance}% rain</p>}
         {wear && (
           <div className="card">
             <h3>Worn</h3>
@@ -204,7 +200,7 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
 }
 
 function WeekSheet({ onClose }: { onClose: () => void }) {
-  const { data, update, weather, ai, toast } = useStore();
+  const { data, update, ai, toast } = useStore();
   const today = dayKey();
   const dates = Array.from({ length: 7 }, (_, i) => addDays(today, i));
   const [occs, setOccs] = useState<string[]>(() => dates.map((d) => ([0, 6].includes(parseDay(d).getDay()) ? 'Everyday' : data.profile.lifestyle.toLowerCase().includes('office') ? 'Work' : 'Everyday')));
@@ -215,16 +211,13 @@ function WeekSheet({ onClose }: { onClose: () => void }) {
     setErr('');
     setBusy(true);
     try {
-      const days = dates.map((date, i) => {
-        const wd = weather?.days.find((d) => d.date === date);
-        return { date, occasion: occs[i], weather: wd ? weatherBrief(wd) : 'unknown' };
-      });
+      const days = dates.map((date, i) => ({ date, occasion: occs[i] }));
       if (ai.apiKey) {
         const plan = await planWeek(ai, { items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile, days });
         update((d) => plan.reduce((acc, p) => (p.item_ids.length ? setPlan(acc, p.date, p.item_ids, p.title, p.note) : acc), d));
       } else {
         update((d) => days.reduce((acc, day) => {
-          const s = localOutfits(acc.items, acc.wears, day.occasion, weather?.days.find((w) => w.date === day.date), 1)[0];
+          const s = localOutfits(acc.items, acc.wears, day.occasion, 1)[0];
           return s ? setPlan(acc, day.date, s.itemIds, `${day.occasion} look`) : acc;
         }, d));
       }
@@ -240,14 +233,12 @@ function WeekSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet title="Plan my week" onClose={onClose}>
       <div className="stack">
-        <p className="muted">Set what each day looks like. Your stylist plans around the forecast and avoids repeats.</p>
+        <p className="muted">Set what each day looks like. Your stylist plans around it and avoids repeats.</p>
         {dates.map((d, i) => {
-          const wd = weather?.days.find((w) => w.date === d);
           return (
             <div key={d} className="row between">
               <span>
-                <strong>{parseDay(d).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}</strong>{' '}
-                {wd && <span className="muted small">{describe(wd.code).icon} {fmtTemp(wd.max, data.settings.tempUnit)}</span>}
+                <strong>{parseDay(d).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}</strong>
               </span>
               <select className="inline" value={occs[i]} onChange={(e) => setOccs(occs.map((o, j) => (j === i ? e.target.value : o)))} aria-label={`Occasion for ${d}`}>
                 {OCCASIONS.map((o) => <option key={o}>{o}</option>)}

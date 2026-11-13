@@ -9,18 +9,19 @@ data stay on your phone.
 - **Digital closet:** snap or upload many photos at once. Claude names and tags each piece (category, colours,
   pattern, material, seasons, formality, style). Search, filter, favourites, a laundry mode that hides dirty
   pieces from suggestions, a wishlist, and an archive for things you've donated or sold.
-- **Outfit of the day:** picks matched to the live forecast (Open-Meteo, no key needed), your occasion, what you
-  wore recently and your 👍/👎 taste feedback. Includes styling tips, "show me more", save, share as an image, and
+- **Outfit of the day:** picks matched to your occasion, what you wore recently and your 👍/👎 taste feedback.
+  Weather and season are deliberately ignored, so jackets and layers are always on the table (handy in hot
+  places with cold air-conditioning). Includes styling tips, "show me more", save, share as an image, and
   log as worn.
 - **Style this piece:** complete looks built around any item.
 - **Outfits and planner:** saved looks, an outfit builder, a monthly calendar of what you wore and what's planned,
-  and **Plan my week**, which plans seven days around the forecast.
+  and **Plan my week**, which plans seven days of outfits.
 - **Stylist chat:** ask anything and attach photos. Answers show your actual pieces and full outfits.
 - **Glow Up:** upload an outfit photo to get a score, what works, fixes, swaps from your closet and finishing
   touches.
 - **Outfit Finder:** upload any inspiration photo. See each piece, what you already own that matches, shopping
   searches, and add the rest to your wishlist.
-- **Pack for a trip:** a capsule packing list using the destination's forecast, outfits day by day, and a
+- **Pack for a trip:** a capsule packing list using the destination's forecast (Open-Meteo, no key needed; the only place weather is used), outfits day by day, and a
   checklist.
 - **Insights:** usage %, most worn, cost per wear, never-worn pieces, category and colour breakdowns, and an AI
   **closet audit** (gaps to fill, pieces to let go, new ways to wear neglected items).

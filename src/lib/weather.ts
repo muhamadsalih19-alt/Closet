@@ -1,3 +1,4 @@
+// Used only by Pack for a trip, to read the destination's forecast.
 import type { Place } from './types';
 
 export interface DayWeather {
@@ -30,10 +31,6 @@ const DESCRIPTIONS: [number[], string, string][] = [
 export function describe(code: number): { text: string; icon: string } {
   const d = DESCRIPTIONS.find(([codes]) => codes.includes(code));
   return d ? { text: d[1], icon: d[2] } : { text: 'Mixed', icon: '🌤️' };
-}
-
-export function fmtTemp(c: number, unit: 'C' | 'F'): string {
-  return unit === 'F' ? `${Math.round((c * 9) / 5 + 32)}°` : `${Math.round(c)}°`;
 }
 
 /** One-line summary the stylist can read. */
@@ -80,15 +77,4 @@ export async function searchPlaces(q: string): Promise<Place[]> {
     lat: r.latitude,
     lon: r.longitude,
   }));
-}
-
-export function currentPosition(): Promise<Place> {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error('Location is not available on this device.'));
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ name: 'Current location', lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }),
-      () => reject(new Error('Location permission was denied. Search for your city instead.')),
-      { timeout: 10000, maximumAge: 3600_000 },
-    );
-  });
 }
