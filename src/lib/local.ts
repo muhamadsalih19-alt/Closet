@@ -1,7 +1,8 @@
 // A simple outfit picker that works with no API key, so the app is useful from day one.
-// Weather and season are deliberately ignored: every piece is available every day.
+// Weather is read as it feels to the person (see feelFor), never as generic rules.
 import { wearStats } from './ai';
 import { occasionLabel, type Item, type Suggestion, type WearLog } from './types';
+import type { Feel } from './weather';
 
 const NEUTRALS = ['black', 'white', 'grey', 'gray', 'cream', 'beige', 'navy', 'denim', 'tan', 'camel', 'brown', 'ivory', 'khaki', 'charcoal', 'olive'];
 const isNeutral = (c: string) => NEUTRALS.some((n) => c.toLowerCase().includes(n));
@@ -19,6 +20,7 @@ const OCCASION_FORMALITY: Record<string, [number, number]> = {
   Interview: [4, 5],
   'Wedding guest': [4, 5],
   Brunch: [2, 3],
+  Outdoors: [1, 2],
 };
 
 function pick<T>(arr: T[], score: (t: T) => number): T | undefined {
@@ -28,7 +30,9 @@ function pick<T>(arr: T[], score: (t: T) => number): T | undefined {
   return scored[0].t;
 }
 
-export function localOutfits(items: Item[], wears: WearLog[], occasion: string, count = 3, anchorId?: string): Suggestion[] {
+const isShorts = (i: Item) => /short/i.test(i.subcategory + ' ' + i.name);
+
+export function localOutfits(items: Item[], wears: WearLog[], occasion: string, count = 3, anchorId?: string, feel?: Feel, strongAC = false): Suggestion[] {
   const stats = wearStats(wears);
   const today = new Date().toISOString().slice(0, 10);
   const [fmin, fmax] = OCCASION_FORMALITY[occasion] ?? [1, 5];
@@ -41,6 +45,8 @@ export function localOutfits(items: Item[], wears: WearLog[], occasion: string, 
     if (!st) s += 1.5;
     else if ((Date.parse(today) - Date.parse(st.last)) / 86400000 < 3) s -= 4;
     if (i.favorite) s += 1;
+    if (feel === 'cool' && isShorts(i)) s -= 3;
+    if (feel === 'hot' && isShorts(i)) s += 1;
     return s;
   };
   const by = (cat: string) => pool.filter((i) => i.category === cat || (occasion === 'Workout' && cat !== 'shoes' && i.category === 'activewear'));
@@ -76,8 +82,9 @@ export function localOutfits(items: Item[], wears: WearLog[], occasion: string, 
       const s = pick(by('shoes'), score);
       if (s) chosen.push(s);
     }
-    // A jacket or layer about half the time, whatever the weather.
-    if (!has('outerwear') && Math.random() < 0.5) {
+    // How often to add a layer depends on how the day feels to them.
+    const layerOdds = feel === 'cool' ? 0.85 : feel === 'hot' ? (strongAC ? 0.25 : 0.05) : 0.5;
+    if (!has('outerwear') && Math.random() < layerOdds) {
       const o = pick(by('outerwear'), score);
       if (o) chosen.push(o);
     }

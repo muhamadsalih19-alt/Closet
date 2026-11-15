@@ -9,13 +9,16 @@ data stay on your phone.
 - **Digital closet:** snap or upload many photos at once. Claude names and tags each piece (category, colours,
   pattern, material, seasons, formality, style). Search, filter, favourites, a laundry mode that hides dirty
   pieces from suggestions, a wishlist, and an archive for things you've donated or sold.
-- **Outfit of the day:** picks matched to your occasion, what you wore recently and your 👍/👎 taste feedback.
-  Weather and season are deliberately ignored, so jackets and layers are always on the table (handy in hot
-  places with cold air-conditioning). Includes styling tips, "show me more", save, share as an image, and
-  log as worn.
+- **Outfit of the day:** pick where you're going in plain words (Normal day, A bit nicer, Food out, Outdoors...).
+  Picks use what you wore recently, your 👍/👎 and, if you add a city, the forecast. Weather is judged by
+  **how it feels to you**: you set where jacket-and-long-pants weather starts and when it's hot, and there's a
+  one-tap "used to the heat (Dubai, Gulf)" preset and a strong-AC option. Includes styling tips, "show me more",
+  save, share as an image, and log as worn.
+- **Notes for your stylist:** standing notes in your style profile ("no shorts to family visits"), plus tips on any
+  piece ("can be worn open over a t-shirt like a light jacket"). The stylist follows both.
 - **Style this piece:** complete looks built around any item.
 - **Outfits and planner:** saved looks, an outfit builder, a monthly calendar of what you wore and what's planned,
-  and **Plan my week**, which plans seven days of outfits.
+  and **Plan my week**, which plans seven days around the forecast as it feels to you.
 - **Stylist chat:** ask anything and attach photos. Answers show your actual pieces and full outfits.
 - **Glow Up:** upload an outfit photo to get a score, what works, fixes, swaps from your closet and finishing
   touches.

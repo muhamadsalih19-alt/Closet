@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useStore } from '../state';
+import { useStore, useDayWeather } from '../state';
+import { describe, fmtTemp, FEEL_LABEL } from '../lib/weather';
 import { useNav } from '../nav';
 import { suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
@@ -21,9 +22,11 @@ function readCache(): { date: string; occasion: string; list: Suggestion[] } | n
 }
 
 export default function Today() {
-  const { data, update, ai, toast } = useStore();
-  const { open } = useNav();
+  const { data, update, ai, toast, weather, weatherError } = useStore();
+  const { open, go } = useNav();
   const today = dayKey();
+  const wx = useDayWeather(today);
+  const unit = data.settings.tempUnit;
   const cached = useMemo(readCache, []);
   const [occasion, setOccasion] = useState(cached?.occasion ?? 'Everyday');
   const [extra, setExtra] = useState('');
@@ -53,7 +56,7 @@ export default function Today() {
     setBusy(true);
     try {
       if (!ai.apiKey) {
-        const res = localOutfits(data.items, data.wears, occasion, 3);
+        const res = localOutfits(data.items, data.wears, occasion, 3, undefined, wx.feel, wx.strongAC);
         if (!res.length) setErr('Add a few tops, bottoms and shoes to your closet first.');
         setList(more ? [...list, ...res] : res);
       } else {
@@ -63,6 +66,7 @@ export default function Today() {
           feedback: data.feedback,
           profile: data.profile,
           occasion,
+          weather: wx.forAi,
           date: today,
           extra,
           avoid: more ? list.map((l) => l.itemIds) : undefined,
@@ -83,6 +87,24 @@ export default function Today() {
         <p className="eyebrow">{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         <h1>{hello}{data.profile.name ? `, ${data.profile.name}` : ''}</h1>
       </header>
+
+      {wx.day ? (
+        <section className="card weather">
+          <div className="weather-main">
+            <span className="weather-icon" aria-hidden>{describe(wx.day.code).icon}</span>
+            <div>
+              <div className="weather-temp">{fmtTemp(weather?.now?.temp ?? wx.day.max, unit)}</div>
+              <div className="muted small nowrap">High {fmtTemp(wx.day.max, unit)} · low {fmtTemp(wx.day.min, unit)}</div>
+            </div>
+          </div>
+          {wx.feel && <div className={'feel ' + wx.feel}>{FEEL_LABEL[wx.feel]}</div>}
+          <button className="link small" onClick={() => go('me')}>Change what counts as cool for you</button>
+        </section>
+      ) : (
+        <button className="card hint" onClick={() => go('me')}>
+          {weatherError || 'Optional: add your city in Me → Settings for weather-aware picks. You decide what counts as cool or hot for you.'}
+        </button>
+      )}
 
 
       {worn && (

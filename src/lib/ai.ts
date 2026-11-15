@@ -81,6 +81,7 @@ export function profileBrief(p: StyleProfile): string {
     p.colorsAvoid && `Colours to avoid: ${p.colorsAvoid}`,
     p.fitNotes && `Fit and body notes: ${p.fitNotes}`,
     p.lifestyle && `Lifestyle: ${p.lifestyle}`,
+    p.stylistNotes?.trim() && `Their notes for you (always follow): ${p.stylistNotes.trim()}`,
   ].filter(Boolean);
   return lines.join('\n');
 }
@@ -103,6 +104,7 @@ export function closetCatalogue(items: Item[], wears: WearLog[]): string {
         s ? `worn ${s.count}x, last ${s.last}` : 'never worn',
         i.favorite ? 'FAVOURITE' : '',
         i.inLaundry ? 'IN LAUNDRY (unavailable)' : '',
+        i.stylingNote?.trim() ? `their styling note: ${i.stylingNote.trim()}` : '',
       ].filter(Boolean);
       return '- ' + bits.join(' | ');
     })
@@ -134,7 +136,8 @@ Rules:
 - A complete outfit covers the body: a dress or one-piece, or a top plus a bottom; plus shoes. Add outerwear when it is cool, windy or wet, and a bag or accessory when it lifts the look.
 - Never pick items marked IN LAUNDRY.
 - Dress for the occasion. Match formality across pieces unless the contrast is deliberate.
-- Weather and season are not factors: every piece is available every day. Never rule out jackets, coats, knits, long sleeves or trousers because of heat or season, and use layering freely.
+- Dress for how the weather feels to THEM, as described with the weather below, not for general temperature rules: they may be used to heat, so 27°C can be cool for them. When no weather is given, every piece is available. Never rule out jackets, long sleeves or trousers just because a number looks warm.
+- Follow their notes. Their standing notes come with their profile, and some pieces carry a styling note (for example a short-sleeve shirt that can be worn open over a t-shirt like a light jacket). Use pieces that way when it suits the outfit, and say so in the styling tip.
 - Respect their style profile and taste feedback. Prefer pieces they have not worn recently, and bring out neglected pieces when they fit.
 - Be specific and confident, like a friend with great taste. No markdown, no emoji.
 - They are not into fashion. Use everyday words a teenager would understand, and short sentences. Avoid fashion jargon (for example elevated, silhouette, capsule, statement piece, tonal, monochrome, proportions, smart casual). If a fashion word is truly needed, explain it in a few words. Outfit names should be simple and obvious, like "Easy weekend look" or "Clean office outfit".`;
@@ -187,6 +190,7 @@ export interface OutfitRequest {
   feedback: Feedback[];
   profile: StyleProfile;
   occasion: string;
+  weather?: string;
   date: string;
   extra?: string;
   anchorId?: string;
@@ -204,7 +208,7 @@ export async function suggestOutfits(ctx: AiCtx, r: OutfitRequest): Promise<{ ou
   const avoid = r.avoid?.length ? `\nDo not repeat these combinations: ${r.avoid.map((a) => a.join('+')).join('; ')}` : '';
   const content = `Date: ${r.date}
 Occasion: ${occasionForAi(r.occasion)}
-${r.extra ? `Extra request: ${r.extra}\n` : ''}
+${r.weather ? `Weather: ${r.weather}\n` : ''}${r.extra ? `Extra request: ${r.extra}\n` : ''}
 Style profile:
 ${profileBrief(r.profile)}
 
@@ -236,12 +240,12 @@ const WeekSchema = z.object({
 
 export async function planWeek(
   ctx: AiCtx,
-  r: Omit<OutfitRequest, 'occasion' | 'date'> & { days: { date: string; occasion: string }[] },
+  r: Omit<OutfitRequest, 'occasion' | 'date' | 'weather'> & { days: { date: string; occasion: string; weather?: string }[] },
 ) {
   const content = `Plan one outfit per day. Avoid repeating the same main pieces on back-to-back days, but re-wearing jeans or shoes across the week is fine.
 
 Days:
-${r.days.map((d) => `${d.date} — ${occasionForAi(d.occasion)}`).join('\n')}
+${r.days.map((d) => `${d.date} — ${occasionForAi(d.occasion)}${d.weather ? ` — ${d.weather}` : ''}`).join('\n')}
 
 Style profile:
 ${profileBrief(r.profile)}
@@ -264,11 +268,11 @@ const ChatSchema = z.object({
   outfits: z.array(z.object({ title: z.string(), item_ids: z.array(z.string()) })).describe('Complete outfits you propose, if any'),
 });
 
-export async function chat(ctx: AiCtx, history: ChatMsg[], items: Item[], wears: WearLog[], profile: StyleProfile) {
+export async function chat(ctx: AiCtx, history: ChatMsg[], items: Item[], wears: WearLog[], profile: StyleProfile, weather?: string) {
   const system = `${STYLIST}
 
 You are chatting with them about style. You can propose outfits from their closet, explain what goes with what, give shopping advice for gaps, help them pack, or talk about trends. When you propose an outfit, put it in outfits. When you mention individual pieces, list their ids in item_ids.
-
+${weather ? `\nToday's weather: ${weather}\n` : ''}
 
 Style profile:
 ${profileBrief(profile)}

@@ -1,5 +1,4 @@
-// Used only by Pack for a trip, to read the destination's forecast.
-import type { Place } from './types';
+import type { Place, Settings } from './types';
 
 export interface DayWeather {
   date: string;
@@ -31,6 +30,10 @@ const DESCRIPTIONS: [number[], string, string][] = [
 export function describe(code: number): { text: string; icon: string } {
   const d = DESCRIPTIONS.find(([codes]) => codes.includes(code));
   return d ? { text: d[1], icon: d[2] } : { text: 'Mixed', icon: '🌤️' };
+}
+
+export function fmtTemp(c: number, unit: 'C' | 'F'): string {
+  return unit === 'F' ? `${Math.round((c * 9) / 5 + 32)}°` : `${Math.round(c)}°`;
 }
 
 /** One-line summary the stylist can read. */
@@ -77,4 +80,44 @@ export async function searchPlaces(q: string): Promise<Place[]> {
     lat: r.latitude,
     lon: r.longitude,
   }));
+}
+
+export function currentPosition(): Promise<Place> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('Location is not available on this device.'));
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ name: 'Current location', lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3) }),
+      () => reject(new Error('Location permission was denied. Search for your city instead.')),
+      { timeout: 10000, maximumAge: 3600_000 },
+    );
+  });
+}
+
+export type Feel = 'cool' | 'mild' | 'hot';
+
+/** Reads the day's high against the person's own idea of cool and hot. */
+export function feelFor(d: DayWeather | undefined, s: Settings): Feel | undefined {
+  if (!d) return undefined;
+  if (d.max < s.coolBelow) return 'cool';
+  if (d.max >= s.hotAbove) return 'hot';
+  return 'mild';
+}
+
+export const FEEL_LABEL: Record<Feel, string> = {
+  cool: 'Feels cool to you · jackets and long pants welcome',
+  mild: 'Feels mild to you · anything goes',
+  hot: 'Feels hot to you · light, breathable pieces',
+};
+
+/** What the stylist is told: the forecast, then how it feels to this person. */
+export function weatherForAi(d: DayWeather | undefined, s: Settings, now?: Weather['now']): string | undefined {
+  const feel = feelFor(d, s);
+  if (!d || !feel) return undefined;
+  const meaning = {
+    cool: 'For THIS person that is COOL weather. Jackets, overshirts, knits, long trousers and layers are welcome and often the better choice. Do not default to shorts.',
+    mild: 'For THIS person that is MILD weather. Anything works; a light layer is a good option.',
+    hot: 'For THIS person that is HOT weather. Prefer light, breathable pieces and skip heavy layers.',
+  }[feel];
+  const ac = s.strongAC ? ' They spend time in strongly air-conditioned places, so a light layer is useful whatever the weather.' : '';
+  return `${weatherBrief(d, now)} ${meaning}${ac} How it feels to them matters more than the number.`;
 }

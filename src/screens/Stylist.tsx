@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { useStore } from '../state';
+import { useStore, useDayWeather } from '../state';
 import { useNav } from '../nav';
 import { chat, glowUp, outfitFinder, packTrip, friendlyError, type FinderResult, type GlowResult, type PackResult } from '../lib/ai';
 import { fileToDataUrl } from '../lib/images';
 import { fetchWeather, searchPlaces, weatherBrief } from '../lib/weather';
 import { saveOutfit } from '../lib/actions';
-import { uid } from '../lib/storage';
+import { dayKey, uid } from '../lib/storage';
 import { OCCASION_ORDER, occasionLabel, type ChatMsg } from '../lib/types';
 import { ErrorNote, ItemPhoto, OutfitBoard, PhotoButton, Sheet, Spinner, shopUrl } from '../components/ui';
 
@@ -56,6 +56,7 @@ const STARTERS = [
 
 function Chat() {
   const { data, update, ai } = useStore();
+  const wx = useDayWeather(dayKey());
   const { open } = useNav();
   const [text, setText] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -78,7 +79,7 @@ function Chat() {
     setPhoto(null);
     setBusy(true);
     try {
-      const r = await chat(ai, history, data.items, data.wears, data.profile);
+      const r = await chat(ai, history, data.items, data.wears, data.profile, wx.forAi);
       update((d) => ({ ...d, chat: [...d.chat, { role: 'assistant' as const, text: r.reply, itemIds: r.itemIds, outfits: r.outfits }].slice(-40) }));
     } catch (e) {
       setErr(friendlyError(e));

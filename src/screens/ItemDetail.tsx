@@ -64,6 +64,19 @@ export default function ItemDetail({ id }: { id: string }) {
           </div>
         )}
 
+        {item.status === 'owned' && (
+          <label className="card field">
+            <span><strong>Tips for your stylist</strong></span>
+            <textarea
+              key={item.id}
+              rows={2}
+              defaultValue={item.stylingNote ?? ''}
+              onBlur={(e) => { if (e.target.value !== (item.stylingNote ?? '')) { set({ stylingNote: e.target.value }); toast('Saved — your stylist will use this'); } }}
+              placeholder="Other ways to wear it, or rules. e.g. Can be worn open over a t-shirt, like a light jacket."
+            />
+          </label>
+        )}
+
         {editing ? (
           <>
             <ItemForm item={item} onChange={set} />

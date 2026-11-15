@@ -68,6 +68,10 @@ export default function ItemForm({ item, onChange }: { item: Item; onChange: (pa
         </label>
       </div>
       <label className="field">
+        <span>Tips for your stylist</span>
+        <input value={item.stylingNote ?? ''} onChange={(e) => onChange({ stylingNote: e.target.value })} placeholder="e.g. can be worn open over a t-shirt" />
+      </label>
+      <label className="field">
         <span>Notes</span>
         <input value={item.notes} onChange={(e) => onChange({ notes: e.target.value })} placeholder="e.g. runs small, dry clean only" />
       </label>

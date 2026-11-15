@@ -18,16 +18,16 @@ export const CATEGORY_LABEL: Record<Category, string> = {
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 export type Season = (typeof SEASONS)[number];
 
-export const OCCASIONS = ['Everyday', 'Work', 'Smart casual', 'Date night', 'Going out', 'Formal event', 'Workout', 'Travel', 'Lounging at home', 'Interview', 'Wedding guest', 'Brunch'] as const;
+export const OCCASIONS = ['Everyday', 'Work', 'Smart casual', 'Brunch', 'Date night', 'Outdoors', 'Formal event', 'Wedding guest', 'Interview', 'Workout', 'Travel', 'Lounging at home'] as const;
 
 /** Plain-language names for the occasions. The ids above stay the same so saved outfits keep matching. */
 export const OCCASION_INFO: Record<string, { icon: string; label: string; hint: string }> = {
   Everyday: { icon: '🚶', label: 'Normal day', hint: 'Errands, uni, hanging out' },
   Work: { icon: '💼', label: 'Work', hint: 'Office or meetings' },
-  'Smart casual': { icon: '☕', label: 'A bit nicer', hint: 'Nice café, mall, meeting friends' },
+  'Smart casual': { icon: '☕', label: 'A bit nicer', hint: 'Out with family, nice café, mall' },
   Brunch: { icon: '🍳', label: 'Food out', hint: 'Brunch, lunch or a relaxed dinner' },
   'Date night': { icon: '❤️', label: 'Date', hint: 'Look good, still comfy' },
-  'Going out': { icon: '🎉', label: 'Night out', hint: 'Party, club, birthday' },
+  Outdoors: { icon: '🏖️', label: 'Outdoors', hint: 'Beach, park, desert trip' },
   'Formal event': { icon: '🤵', label: 'Fancy event', hint: 'Gala, awards, suit-and-tie' },
   'Wedding guest': { icon: '💍', label: 'Wedding', hint: 'Going as a guest' },
   Interview: { icon: '🤝', label: 'Job interview', hint: 'Make a good first impression' },
@@ -37,7 +37,10 @@ export const OCCASION_INFO: Record<string, { icon: string; label: string; hint: 
 };
 
 /** Occasions in the order they're shown: most common first. */
-export const OCCASION_ORDER = Object.keys(OCCASION_INFO);
+export const OCCASION_ORDER: string[] = [...OCCASIONS];
+
+// Retired option, kept so older saved outfits still show a name.
+OCCASION_INFO['Going out'] = { icon: '🎉', label: 'Night out', hint: 'Party or late night' };
 
 export const occasionLabel = (id: string) => OCCASION_INFO[id]?.label ?? id;
 
@@ -66,6 +69,8 @@ export interface Item {
   status: ItemStatus;
   hasPhoto: boolean;
   createdAt: number;
+  /** The owner's own tip for the stylist, e.g. "can be worn open over a tee like a light jacket". */
+  stylingNote?: string;
 }
 
 export interface Outfit {
@@ -108,6 +113,8 @@ export interface StyleProfile {
   colorsAvoid: string;
   fitNotes: string;
   lifestyle: string;
+  /** Standing instructions for the stylist. */
+  stylistNotes?: string;
   onboarded: boolean;
 }
 
@@ -120,6 +127,14 @@ export interface Place {
 export interface Settings {
   apiKey: string;
   model: string;
+  place: Place | null;
+  tempUnit: 'C' | 'F';
+  /** Below this daytime high (°C) it feels cool to them: jackets and long pants welcome. */
+  coolBelow: number;
+  /** At or above this daytime high (°C) it feels hot to them. */
+  hotAbove: number;
+  /** They spend time in strongly air-conditioned places. */
+  strongAC: boolean;
 }
 
 export interface ChatMsg {

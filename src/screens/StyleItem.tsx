@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useStore } from '../state';
+import { useStore, useDayWeather } from '../state';
 import { useNav } from '../nav';
 import { suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
@@ -10,6 +10,7 @@ import SuggestionCard from '../components/SuggestionCard';
 
 export default function StyleItem({ id }: { id: string }) {
   const { data, ai } = useStore();
+  const wx = useDayWeather(dayKey());
   const { close } = useNav();
   const item = data.items.find((i) => i.id === id);
   const [occasion, setOccasion] = useState('Everyday');
@@ -22,11 +23,11 @@ export default function StyleItem({ id }: { id: string }) {
     setBusy(true);
     setList([]);
     try {
-      if (!ai.apiKey) setList(localOutfits(data.items, data.wears, occ, 3, id));
+      if (!ai.apiKey) setList(localOutfits(data.items, data.wears, occ, 3, id, wx.feel, wx.strongAC));
       else {
         const r = await suggestOutfits(ai, {
           items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile,
-          occasion: occ, date: dayKey(), anchorId: id,
+          occasion: occ, weather: wx.forAi, date: dayKey(), anchorId: id,
         });
         setList(r.outfits);
       }

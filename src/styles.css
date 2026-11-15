@@ -54,7 +54,7 @@ h4 { font-size: 14px; margin-top: 6px; }
 button { font: inherit; color: inherit; cursor: pointer; border: none; background: none; touch-action: manipulation; padding: 0; text-align: inherit; }
 button:disabled { opacity: 0.45; cursor: default; }
 a { color: var(--brand); }
-input, select {
+input, select, textarea {
   font: inherit;
   font-size: 16px;
   color: var(--text);
@@ -65,7 +65,8 @@ input, select {
   width: 100%;
   min-width: 0;
 }
-input:focus, select:focus { outline: none; border-color: var(--brand); }
+textarea { resize: vertical; line-height: 1.4; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand); }
 input[type='range'] { padding: 0; border: none; accent-color: var(--brand); background: transparent; }
 input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--brand); flex: none; }
 select.inline { width: auto; padding: 6px 10px; font-size: 14px; }
@@ -268,3 +269,14 @@ ul.clean { margin: 0; padding-left: 18px; display: flex; flex-direction: column;
 .occasion-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .occasion-text strong { font-size: 15px; }
 .occasion-text span { font-size: 12px; opacity: 0.75; line-height: 1.25; }
+
+.weather { gap: 8px; }
+.weather-main { display: flex; align-items: center; gap: 12px; }
+.weather-icon { font-size: 36px; }
+.weather-temp { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.weather .link { align-self: flex-start; }
+.feel { font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 10px; }
+.feel.cool { background: #e2ecf8; color: #24508a; }
+.feel.mild { background: var(--good-soft); color: var(--good); }
+.feel.hot { background: var(--brand-soft); color: var(--brand); }
+@media (prefers-color-scheme: dark) { .feel.cool { background: #1d2b3d; color: #9cc3ef; } }

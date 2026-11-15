@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { EMPTY, loadData, loadImages, saveData, saveImage, deleteImage, type AppData } from './lib/storage';
 import type { AiCtx } from './lib/ai';
+import { feelFor, fetchWeather, weatherForAi, type DayWeather, type Feel, type Weather } from './lib/weather';
 
 interface Store {
   data: AppData;
@@ -8,6 +9,8 @@ interface Store {
   update: (fn: (d: AppData) => AppData) => void;
   setImage: (id: string, dataUrl: string | null) => Promise<void>;
   replaceAll: (data: AppData, images: Record<string, string>) => Promise<void>;
+  weather: Weather | null;
+  weatherError: string;
   ai: AiCtx;
   toast: (msg: string) => void;
 }
@@ -24,6 +27,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData | null>(null);
   const [images, setImages] = useState<Record<string, string>>({});
   const [toastMsg, setToastMsg] = useState('');
+  const [weather, setWeather] = useState<Weather | null>(null);
+  const [weatherError, setWeatherError] = useState('');
   const toastTimer = useRef<number>(0);
 
   useEffect(() => {
@@ -36,6 +41,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (data) saveData(data);
   }, [data]);
+
+  const lat = data?.settings.place?.lat;
+  const lon = data?.settings.place?.lon;
+  const placeName = data?.settings.place?.name;
+  useEffect(() => {
+    if (lat == null || lon == null) {
+      setWeather(null);
+      return;
+    }
+    setWeatherError('');
+    fetchWeather({ lat, lon, name: placeName ?? '' })
+      .then(setWeather)
+      .catch((e) => setWeatherError(e instanceof Error ? e.message : 'Weather unavailable'));
+  }, [lat, lon, placeName]);
 
   const update = useCallback((fn: (d: AppData) => AppData) => setData((d) => fn(d ?? EMPTY)), []);
 
@@ -70,6 +89,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     update,
     setImage,
     replaceAll,
+    weather,
+    weatherError,
     ai: { apiKey: data.settings.apiKey, model: data.settings.model },
     toast,
   };
@@ -79,4 +100,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
     </Ctx.Provider>
   );
+}
+
+/** The forecast for a date, how it feels to this person, and the text the stylist reads. */
+export function useDayWeather(date: string): { day: DayWeather | undefined; feel: Feel | undefined; forAi: string | undefined; strongAC: boolean } {
+  const { weather, data } = useStore();
+  const day = weather?.days.find((d) => d.date === date);
+  const isToday = weather?.days[0]?.date === date;
+  return {
+    day,
+    feel: feelFor(day, data.settings),
+    forAi: weatherForAi(day, data.settings, isToday ? weather?.now : undefined),
+    strongAC: data.settings.strongAC,
+  };
 }

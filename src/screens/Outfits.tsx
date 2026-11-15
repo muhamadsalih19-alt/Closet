@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useStore } from '../state';
+import { useStore, useDayWeather } from '../state';
+import { describe, feelFor, fmtTemp, weatherForAi, FEEL_LABEL } from '../lib/weather';
 import { useNav } from '../nav';
 import { planWeek, suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
@@ -126,6 +127,7 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
   const wear = data.wears.find((w) => w.date === date);
   const plan = data.plans.find((p) => p.date === date);
   const past = date < dayKey();
+  const wx = useDayWeather(date);
   const label = parseDay(date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
   const styleDay = async () => {
@@ -133,8 +135,8 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
     setBusy(true);
     try {
       const s = ai.apiKey
-        ? (await suggestOutfits(ai, { items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile, occasion: occ, date, count: 1 })).outfits[0]
-        : localOutfits(data.items, data.wears, occ, 1)[0];
+        ? (await suggestOutfits(ai, { items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile, occasion: occ, weather: wx.forAi, date, count: 1 })).outfits[0]
+        : localOutfits(data.items, data.wears, occ, 1, undefined, wx.feel, wx.strongAC)[0];
       if (!s) throw new Error('Add more clothes to your closet first.');
       update((d) => setPlan(d, date, s.itemIds, s.title, s.why));
     } catch (e) {
@@ -147,6 +149,11 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
   return (
     <Sheet title={label} onClose={onClose}>
       <div className="stack">
+        {wx.day && (
+          <p className="muted">
+            {describe(wx.day.code).icon} High {fmtTemp(wx.day.max, data.settings.tempUnit)}{wx.feel ? ` · ${FEEL_LABEL[wx.feel]}` : ''}
+          </p>
+        )}
         {wear && (
           <div className="card">
             <h3>Worn</h3>
@@ -200,7 +207,7 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
 }
 
 function WeekSheet({ onClose }: { onClose: () => void }) {
-  const { data, update, ai, toast } = useStore();
+  const { data, update, ai, toast, weather } = useStore();
   const today = dayKey();
   const dates = Array.from({ length: 7 }, (_, i) => addDays(today, i));
   const [occs, setOccs] = useState<string[]>(() => dates.map((d) => ([0, 6].includes(parseDay(d).getDay()) ? 'Everyday' : data.profile.lifestyle.toLowerCase().includes('office') ? 'Work' : 'Everyday')));
@@ -211,13 +218,13 @@ function WeekSheet({ onClose }: { onClose: () => void }) {
     setErr('');
     setBusy(true);
     try {
-      const days = dates.map((date, i) => ({ date, occasion: occs[i] }));
+      const days = dates.map((date, i) => ({ date, occasion: occs[i], weather: weatherForAi(weather?.days.find((d) => d.date === date), data.settings) }));
       if (ai.apiKey) {
         const plan = await planWeek(ai, { items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile, days });
         update((d) => plan.reduce((acc, p) => (p.item_ids.length ? setPlan(acc, p.date, p.item_ids, p.title, p.note) : acc), d));
       } else {
         update((d) => days.reduce((acc, day) => {
-          const s = localOutfits(acc.items, acc.wears, day.occasion, 1)[0];
+          const s = localOutfits(acc.items, acc.wears, day.occasion, 1, undefined, feelFor(weather?.days.find((w) => w.date === day.date), data.settings), data.settings.strongAC)[0];
           return s ? setPlan(acc, day.date, s.itemIds, `${occasionLabel(day.occasion)} outfit`) : acc;
         }, d));
       }
@@ -238,7 +245,12 @@ function WeekSheet({ onClose }: { onClose: () => void }) {
           return (
             <div key={d} className="row between">
               <span>
-                <strong>{parseDay(d).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}</strong>
+                <strong>{parseDay(d).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}</strong>{' '}
+                {(() => {
+                  const w = weather?.days.find((x) => x.date === d);
+                  const f = feelFor(w, data.settings);
+                  return w ? <span className="muted small">{describe(w.code).icon} {fmtTemp(w.max, data.settings.tempUnit)}{f ? ` · ${f}` : ''}</span> : null;
+                })()}
               </span>
               <select className="inline" value={occs[i]} onChange={(e) => setOccs(occs.map((o, j) => (j === i ? e.target.value : o)))} aria-label={`Occasion for ${d}`}>
                 {OCCASION_ORDER.map((o) => <option key={o} value={o}>{occasionLabel(o)}</option>)}

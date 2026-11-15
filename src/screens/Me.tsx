@@ -6,6 +6,8 @@ import { clearAll, dayKey, addDays, exportBackup, parseBackup } from '../lib/sto
 import { CATEGORIES, CATEGORY_LABEL, type StyleProfile } from '../lib/types';
 import { Chip, ErrorNote, ItemPhoto, Spinner, shopUrl } from '../components/ui';
 import { STYLE_OPTIONS } from './Welcome';
+import LocationPicker from '../components/LocationPicker';
+import { describe, feelFor, fmtTemp, FEEL_LABEL } from '../lib/weather';
 
 type View = 'insights' | 'profile' | 'settings';
 
@@ -207,6 +209,16 @@ function Profile() {
       {field('colorsAvoid', 'Colours I avoid', 'e.g. neon')}
       {field('fitNotes', 'Fit preferences', 'e.g. relaxed fits, high-waisted')}
       {field('lifestyle', 'My week', 'e.g. office 3 days, gym, weekend dinners')}
+      <label className="field">
+        <span>Notes for your stylist</span>
+        <textarea
+          rows={4}
+          value={p.stylistNotes ?? ''}
+          onChange={(e) => setP({ ...p, stylistNotes: e.target.value })}
+          placeholder="Anything it should always keep in mind. e.g. I like wearing open shirts over t-shirts. I don’t wear shorts to family visits."
+        />
+        <span className="muted small">Tips about one piece go on that piece: open it in your closet and use “Tips for your stylist”.</span>
+      </label>
       <p className="muted small">Your stylist also learns from every 👍 and 👎 ({data.feedback.length} so far).</p>
       <button className="btn primary" onClick={() => { update((d) => ({ ...d, profile: { ...p, onboarded: true } })); toast('Style profile saved'); }}>Save</button>
       {data.feedback.length > 0 && <button className="btn small" onClick={() => { update((d) => ({ ...d, feedback: [] })); toast('Taste feedback reset'); }}>Reset taste feedback</button>}
@@ -215,7 +227,7 @@ function Profile() {
 }
 
 function SettingsView() {
-  const { data, images, update, replaceAll, toast } = useStore();
+  const { data, images, update, replaceAll, toast, weather } = useStore();
   const s = data.settings;
   const [key, setKey] = useState(s.apiKey);
   const [testing, setTesting] = useState(false);
@@ -278,6 +290,39 @@ function SettingsView() {
         </label>
       </section>
 
+
+      <section className="card stack-sm">
+        <h3>Weather</h3>
+        <p className="muted small">Optional. Your stylist checks the forecast, but judges it by what feels cool or hot <em>to you</em>, not by general rules.</p>
+        <LocationPicker value={s.place} onChange={(p) => set({ place: p })} />
+        <button className="btn small" onClick={() => { set({ coolBelow: 30, hotAbove: 37, strongAC: true }); toast('Set for someone used to the heat'); }}>
+          🌴 I’m used to the heat (Dubai, Gulf)
+        </button>
+        <label className="field">
+          <span>Jacket and long-pants weather when the high is below <strong>{fmtTemp(s.coolBelow, s.tempUnit)}</strong></span>
+          <input type="range" min={5} max={38} value={s.coolBelow} onChange={(e) => { const v = +e.target.value; set({ coolBelow: v, hotAbove: Math.max(s.hotAbove, v + 1) }); }} />
+        </label>
+        <label className="field">
+          <span>Hot weather when the high is <strong>{fmtTemp(s.hotAbove, s.tempUnit)}</strong> or more</span>
+          <input type="range" min={15} max={48} value={s.hotAbove} onChange={(e) => { const v = +e.target.value; set({ hotAbove: v, coolBelow: Math.min(s.coolBelow, v - 1) }); }} />
+        </label>
+        <label className="row check">
+          <input type="checkbox" checked={s.strongAC} onChange={(e) => set({ strongAC: e.target.checked })} />
+          <span>Places I go have strong AC, so a light layer is often handy</span>
+        </label>
+        {weather?.days[0] && (
+          <div className="note small">
+            Today: {describe(weather.days[0].code).icon} high {fmtTemp(weather.days[0].max, s.tempUnit)} → {FEEL_LABEL[feelFor(weather.days[0], s)!]}
+          </div>
+        )}
+        <div className="field">
+          <span>Temperature</span>
+          <div className="chips">
+            <Chip on={s.tempUnit === 'C'} onClick={() => set({ tempUnit: 'C' })}>°C</Chip>
+            <Chip on={s.tempUnit === 'F'} onClick={() => set({ tempUnit: 'F' })}>°F</Chip>
+          </div>
+        </div>
+      </section>
 
       <section className="card stack-sm">
         <h3>Your data</h3>
