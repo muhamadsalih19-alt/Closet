@@ -14,6 +14,9 @@ data stay on your phone.
   **how it feels to you**: you set where jacket-and-long-pants weather starts and when it's hot, and there's a
   one-tap "used to the heat (Dubai, Gulf)" preset and a strong-AC option. Includes styling tips, "show me more",
   save, share as an image, and log as worn.
+- **Stylist memory:** tell it what you like in the "Tell your stylist" box, in the chat (it saves lasting
+  preferences itself and shows "📌 Remembered"), or from Today with "Remember this for next time". See and delete
+  everything it remembers in the Stylist tab.
 - **Notes for your stylist:** standing notes in your style profile ("no shorts to family visits"), plus tips on any
   piece ("can be worn open over a t-shirt like a light jacket"). The stylist follows both.
 - **Style this piece:** complete looks built around any item.

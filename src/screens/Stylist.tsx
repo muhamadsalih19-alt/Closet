@@ -6,6 +6,7 @@ import { fileToDataUrl } from '../lib/images';
 import { fetchWeather, searchPlaces, weatherBrief } from '../lib/weather';
 import { saveOutfit } from '../lib/actions';
 import { dayKey, uid } from '../lib/storage';
+import { forget, remember } from '../lib/memory';
 import { OCCASION_ORDER, occasionLabel, type ChatMsg } from '../lib/types';
 import { ErrorNote, ItemPhoto, OutfitBoard, PhotoButton, Sheet, Spinner, shopUrl } from '../components/ui';
 
@@ -39,11 +40,57 @@ export default function Stylist() {
           <span className="tool-text"><strong>Pack for a trip</strong><span className="muted small">A capsule and a day-by-day plan</span></span>
         </button>
       </div>
+      <Memory />
       <Chat />
       {tool === 'glow' && <GlowUp onClose={() => setTool(null)} />}
       {tool === 'finder' && <Finder onClose={() => setTool(null)} />}
       {tool === 'pack' && <Pack onClose={() => setTool(null)} />}
     </div>
+  );
+}
+
+const MEMORY_EXAMPLES = ['For desert trips, nothing that gets dirty easily', 'I don’t like tight jeans', 'I prefer dark colours for family events'];
+
+function Memory() {
+  const { data, update, toast } = useStore();
+  const [text, setText] = useState('');
+  const [showAll, setShowAll] = useState(false);
+  const notes = data.profile.memory ?? [];
+  const shown = showAll ? notes : notes.slice(-3);
+  const save = (t: string) => {
+    if (!t.trim()) return;
+    update((d) => remember(d, [t]));
+    setText('');
+    toast('Your stylist will remember that');
+  };
+  return (
+    <section className="card stack-sm">
+      <h2>Tell your stylist what you like</h2>
+      <p className="muted small">Likes, dislikes, rules for certain days. It remembers and follows them every time.</p>
+      <form className="row" onSubmit={(e) => { e.preventDefault(); save(text); }}>
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. For desert trips, nothing that gets dirty easily" aria-label="Something your stylist should remember" />
+        <button className="btn primary" disabled={!text.trim()}>Save</button>
+      </form>
+      {!notes.length && (
+        <div className="chips">
+          {MEMORY_EXAMPLES.map((ex) => <button key={ex} type="button" className="chip" onClick={() => setText(ex)}>{ex}</button>)}
+        </div>
+      )}
+      {notes.length > 0 && (
+        <>
+          <h3 className="small muted">Your stylist remembers ({notes.length})</h3>
+          <ul className="memory">
+            {shown.map((m) => (
+              <li key={m.id}>
+                <span>{m.text}</span>
+                <button className="icon-btn" aria-label={`Forget: ${m.text}`} onClick={() => update((d) => forget(d, m.id))}>✕</button>
+              </li>
+            ))}
+          </ul>
+          {notes.length > 3 && <button className="link small" onClick={() => setShowAll(!showAll)}>{showAll ? 'Show less' : `Show all ${notes.length}`}</button>}
+        </>
+      )}
+    </section>
   );
 }
 
@@ -80,7 +127,7 @@ function Chat() {
     setBusy(true);
     try {
       const r = await chat(ai, history, data.items, data.wears, data.profile, wx.forAi);
-      update((d) => ({ ...d, chat: [...d.chat, { role: 'assistant' as const, text: r.reply, itemIds: r.itemIds, outfits: r.outfits }].slice(-40) }));
+      update((d) => remember({ ...d, chat: [...d.chat, { role: 'assistant' as const, text: r.reply, itemIds: r.itemIds, outfits: r.outfits, remembered: r.remember }].slice(-40) }, r.remember));
     } catch (e) {
       setErr(friendlyError(e));
     } finally {
@@ -103,6 +150,9 @@ function Chat() {
         <div key={i} className={'bubble ' + m.role}>
           {m.image && <img className="bubble-img" src={m.image} alt="Your photo" />}
           {m.text && <p>{m.text}</p>}
+          {m.remembered && m.remembered.length > 0 && (
+            <div className="remembered">{m.remembered.map((t, k) => <span key={k}>📌 Remembered: {t}</span>)}</div>
+          )}
           {m.itemIds && m.itemIds.length > 0 && (
             <div className="mini-row">
               {m.itemIds.map((id) => {

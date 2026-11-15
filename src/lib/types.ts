@@ -115,7 +115,15 @@ export interface StyleProfile {
   lifestyle: string;
   /** Standing instructions for the stylist. */
   stylistNotes?: string;
+  /** Likes, dislikes and rules the user has told the stylist, one per entry. */
+  memory?: MemoryNote[];
   onboarded: boolean;
+}
+
+export interface MemoryNote {
+  id: string;
+  text: string;
+  at: number;
 }
 
 export interface Place {
@@ -143,6 +151,8 @@ export interface ChatMsg {
   itemIds?: string[];
   outfits?: { title: string; itemIds: string[] }[];
   image?: string;
+  /** Preferences the stylist saved to memory from this message. */
+  remembered?: string[];
 }
 
 export interface Suggestion {

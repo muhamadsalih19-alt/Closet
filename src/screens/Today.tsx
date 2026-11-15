@@ -6,6 +6,7 @@ import { suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
 import { dayKey } from '../lib/storage';
 import { logWear } from '../lib/actions';
+import { remember } from '../lib/memory';
 import { OCCASION_INFO, OCCASION_ORDER, type Suggestion } from '../lib/types';
 import { Empty, ErrorNote, OutfitBoard, Spinner } from '../components/ui';
 import SuggestionCard from '../components/SuggestionCard';
@@ -145,7 +146,14 @@ export default function Today() {
           </div>
           {!showAll && <button className="link small center" onClick={() => setShowAll(true)}>More options (gym, wedding, interview…)</button>}
           {ai.apiKey && (
-            <input value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Anything else? (optional) e.g. “I’ll be walking a lot”" aria-label="Anything else your stylist should know" />
+            <div className="stack-sm">
+              <input value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Anything else? (optional) e.g. “I’ll be walking a lot”" aria-label="Anything else your stylist should know" />
+              {extra.trim().length > 3 && (
+                <button type="button" className="link small" onClick={() => { update((d) => remember(d, [extra])); toast('Saved — your stylist will remember this'); }}>
+                  📌 Remember this for next time
+                </button>
+              )}
+            </div>
           )}
           <button className="btn primary big" disabled={busy} onClick={() => styleMe(false)}>
             {list.length ? '↻ New picks' : '✦ Style me'}

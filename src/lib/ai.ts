@@ -82,6 +82,7 @@ export function profileBrief(p: StyleProfile): string {
     p.fitNotes && `Fit and body notes: ${p.fitNotes}`,
     p.lifestyle && `Lifestyle: ${p.lifestyle}`,
     p.stylistNotes?.trim() && `Their notes for you (always follow): ${p.stylistNotes.trim()}`,
+    p.memory?.length && `Things they have told you they like, dislike or want (always follow, especially when the occasion matches):\n${p.memory.map((m) => `  - ${m.text}`).join('\n')}`,
   ].filter(Boolean);
   return lines.join('\n');
 }
@@ -266,12 +267,13 @@ const ChatSchema = z.object({
   reply: z.string().describe('Your answer, conversational, a few short paragraphs at most'),
   item_ids: z.array(z.string()).describe('Closet items you mention individually, to show as pictures'),
   outfits: z.array(z.object({ title: z.string(), item_ids: z.array(z.string()) })).describe('Complete outfits you propose, if any'),
+  remember: z.array(z.string()).describe('Lasting likes, dislikes or rules they just told you, each as one short clear note, e.g. "For desert trips: avoid light colours and fabrics that show dirt easily". Empty if they did not state one, or if it is already in what they have told you.'),
 });
 
 export async function chat(ctx: AiCtx, history: ChatMsg[], items: Item[], wears: WearLog[], profile: StyleProfile, weather?: string) {
   const system = `${STYLIST}
 
-You are chatting with them about style. You can propose outfits from their closet, explain what goes with what, give shopping advice for gaps, help them pack, or talk about trends. When you propose an outfit, put it in outfits. When you mention individual pieces, list their ids in item_ids.
+You are chatting with them about style. You can propose outfits from their closet, explain what goes with what, give shopping advice for gaps, help them pack, or talk about trends. When you propose an outfit, put it in outfits. When you mention individual pieces, list their ids in item_ids. When they tell you something lasting about what they like, dislike or want (for an occasion, a colour, a fit, a piece), put it in remember so you keep it for next time, and briefly confirm you will remember it.
 ${weather ? `\nToday's weather: ${weather}\n` : ''}
 
 Style profile:
@@ -287,6 +289,7 @@ ${closetCatalogue(items, wears) || '(empty so far)'}`;
   const valid = new Set(items.map((i) => i.id));
   return {
     reply: out.reply,
+    remember: out.remember.map((t) => t.trim()).filter(Boolean),
     itemIds: out.item_ids.filter((id) => valid.has(id)),
     outfits: out.outfits.map((o) => ({ title: o.title, itemIds: o.item_ids.filter((id) => valid.has(id)) })).filter((o) => o.itemIds.length),
   };

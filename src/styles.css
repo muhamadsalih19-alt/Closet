@@ -280,3 +280,9 @@ ul.clean { margin: 0; padding-left: 18px; display: flex; flex-direction: column;
 .feel.mild { background: var(--good-soft); color: var(--good); }
 .feel.hot { background: var(--brand-soft); color: var(--brand); }
 @media (prefers-color-scheme: dark) { .feel.cool { background: #1d2b3d; color: #9cc3ef; } }
+
+.memory { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.memory li { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 10px; padding: 4px 4px 4px 12px; font-size: 14px; }
+.memory li span { flex: 1; }
+.remembered { display: flex; flex-direction: column; gap: 4px; white-space: normal; }
+.remembered span { font-size: 13px; background: var(--brand-soft); color: var(--text); padding: 6px 10px; border-radius: 10px; }

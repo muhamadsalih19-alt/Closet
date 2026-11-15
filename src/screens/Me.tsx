@@ -217,7 +217,7 @@ function Profile() {
           onChange={(e) => setP({ ...p, stylistNotes: e.target.value })}
           placeholder="Anything it should always keep in mind. e.g. I like wearing open shirts over t-shirts. I don’t wear shorts to family visits."
         />
-        <span className="muted small">Tips about one piece go on that piece: open it in your closet and use “Tips for your stylist”.</span>
+        <span className="muted small">Tips about one piece go on that piece: open it in your closet and use “Tips for your stylist”. Likes and dislikes you tell your stylist are listed in the Stylist tab ({(data.profile.memory ?? []).length} saved).</span>
       </label>
       <p className="muted small">Your stylist also learns from every 👍 and 👎 ({data.feedback.length} so far).</p>
       <button className="btn primary" onClick={() => { update((d) => ({ ...d, profile: { ...p, onboarded: true } })); toast('Style profile saved'); }}>Save</button>
