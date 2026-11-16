@@ -51,9 +51,11 @@ export default function OutfitEditor({ id, itemIds, name, occasion }: { id?: str
           {owned.filter((i) => i.category === cat).map((i) => <ItemTile key={i.id} item={i} selected={sel.includes(i.id)} onClick={() => toggle(i.id)} />)}
         </div>
 
-        <button className="btn primary big" disabled={!sel.length} onClick={save}>Save outfit</button>
+        <button className="btn primary big" disabled={!sel.length} onClick={() => { update((d) => logWear(d, sel, dayKey(), occ, existing?.id ?? null)); toast('Logged as today’s outfit'); }}>
+          Wear this today
+        </button>
         <div className="row wrap">
-          <button className="btn grow" disabled={!sel.length} onClick={() => { update((d) => logWear(d, sel, dayKey(), occ, existing?.id ?? null)); toast('Logged as today’s outfit'); }}>Wear today</button>
+          <button className={'btn grow' + (existing ? '' : ' primary')} disabled={!sel.length} onClick={save}>{existing ? 'Save changes' : 'Save outfit'}</button>
           <button className="btn grow" disabled={!sel.length} onClick={() => share(title || 'My outfit', sel)}>Share</button>
         </div>
         <div className="row">

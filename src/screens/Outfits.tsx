@@ -7,7 +7,7 @@ import { localOutfits } from '../lib/local';
 import { addDays, dayKey, parseDay } from '../lib/storage';
 import { logWear, setPlan } from '../lib/actions';
 import { OCCASION_ORDER, occasionLabel } from '../lib/types';
-import { Chip, Empty, ErrorNote, ItemPhoto, OutfitBoard, Sheet, Spinner } from '../components/ui';
+import { Chip, Empty, ErrorNote, ItemPhoto, OutfitBoard, Sheet, Spinner, useShareOutfit } from '../components/ui';
 
 type View = 'saved' | 'planner' | 'history';
 
@@ -35,8 +35,11 @@ export default function Outfits() {
 }
 
 function Saved() {
-  const { data, update } = useStore();
+  const { data, update, toast } = useStore();
   const { open } = useNav();
+  const share = useShareOutfit();
+  const todays = data.wears.find((w) => w.date === dayKey());
+  const sameItems = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
   const [occ, setOcc] = useState('all');
   const occs = Array.from(new Set(data.outfits.map((o) => o.occasion).filter(Boolean)));
   const list = data.outfits.filter((o) => occ === 'all' || (occ === 'fav' ? o.favorite : o.occasion === occ));
@@ -65,8 +68,25 @@ function Saved() {
               {o.favorite ? '♥' : '♡'}
             </button>
           </div>
-          <OutfitBoard itemIds={o.itemIds} onItem={() => open({ kind: 'outfit', id: o.id })} />
-          <button className="btn small" onClick={() => open({ kind: 'outfit', id: o.id })}>Open</button>
+          <OutfitBoard itemIds={o.itemIds} onItem={(id) => open({ kind: 'item', id })} />
+          {todays && sameItems(todays.itemIds, o.itemIds) ? (
+            <div className="note good small">✓ You’re wearing this today</div>
+          ) : (
+            <button
+              className="btn primary"
+              onClick={() => {
+                if (todays && !confirm('You already logged an outfit today. Replace it with this one?')) return;
+                update((d) => logWear(d, o.itemIds, dayKey(), o.occasion, o.id));
+                toast('Logged as today’s outfit');
+              }}
+            >
+              Wear this today
+            </button>
+          )}
+          <div className="row wrap">
+            <button className="btn small grow" onClick={() => open({ kind: 'outfit', id: o.id })}>Tweak</button>
+            <button className="btn small grow" onClick={() => share(o.name, o.itemIds)}>Share</button>
+          </div>
         </article>
       ))}
     </>
