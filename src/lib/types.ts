@@ -117,6 +117,8 @@ export interface StyleProfile {
   stylistNotes?: string;
   /** Likes, dislikes and rules the user has told the stylist, one per entry. */
   memory?: MemoryNote[];
+  /** Music they like, for song suggestions. */
+  musicTaste?: string;
   onboarded: boolean;
 }
 

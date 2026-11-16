@@ -8,9 +8,10 @@ import { saveOutfit } from '../lib/actions';
 import { dayKey, uid } from '../lib/storage';
 import { forget, remember } from '../lib/memory';
 import { OCCASION_ORDER, occasionLabel, type ChatMsg } from '../lib/types';
+import SongForFit from '../components/SongForFit';
 import { ErrorNote, ItemPhoto, OutfitBoard, PhotoButton, Sheet, Spinner, shopUrl } from '../components/ui';
 
-type Tool = 'glow' | 'finder' | 'pack' | null;
+type Tool = 'glow' | 'finder' | 'pack' | 'song' | null;
 
 export default function Stylist() {
   const [tool, setTool] = useState<Tool>(null);
@@ -39,12 +40,17 @@ export default function Stylist() {
           <span className="tool-icon" aria-hidden>🧳</span>
           <span className="tool-text"><strong>Pack for a trip</strong><span className="muted small">A capsule and a day-by-day plan</span></span>
         </button>
+        <button className="tool" onClick={() => setTool('song')}>
+          <span className="tool-icon" aria-hidden>🎵</span>
+          <span className="tool-text"><strong>Song for my fit</strong><span className="muted small">Music and captions for your Instagram post</span></span>
+        </button>
       </div>
       <Memory />
       <Chat />
       {tool === 'glow' && <GlowUp onClose={() => setTool(null)} />}
       {tool === 'finder' && <Finder onClose={() => setTool(null)} />}
       {tool === 'pack' && <Pack onClose={() => setTool(null)} />}
+      {tool === 'song' && <SongForFit onClose={() => setTool(null)} />}
     </div>
   );
 }

@@ -27,6 +27,9 @@ data stay on your phone.
   touches.
 - **Outfit Finder:** upload any inspiration photo. See each piece, what you already own that matches, shopping
   searches, and add the rest to your wishlist.
+- **Song for my fit:** take a photo of your outfit (or use today's) and get 5 songs that match its vibe for your
+  Instagram post, with which part to use, Spotify/YouTube preview links and caption ideas. Remembers your music
+  taste.
 - **Pack for a trip:** a capsule packing list using the destination's forecast (Open-Meteo, no key needed; the only place weather is used), outfits day by day, and a
   checklist.
 - **Insights:** usage %, most worn, cost per wear, never-worn pieces, category and colour breakdowns, and an AI

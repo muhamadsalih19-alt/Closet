@@ -351,6 +351,35 @@ ${closetCatalogue(items, wears) || '(empty)'}`;
   return { ...out, pieces: out.pieces.map((p) => ({ ...p, closet_matches: p.closet_matches.filter((id) => valid.has(id)) })) };
 }
 
+// ---------- Song for a fit (Instagram posts) ----------
+
+const SongSchema = z.object({
+  vibe: z.string().describe('The outfit vibe in a few plain words, e.g. "clean, laid-back, summery"'),
+  songs: z.array(
+    z.object({
+      title: z.string(),
+      artist: z.string(),
+      why: z.string().describe('One short line on why it fits the outfit'),
+      best_part: z.string().describe('Which part to use in the post, e.g. "the chorus" or "from 0:45"'),
+    }),
+  ),
+  captions: z.array(z.string()).describe('3 short Instagram captions, casual, no hashtag spam (at most 2 hashtags)'),
+});
+export type SongResult = z.infer<typeof SongSchema>;
+
+export async function songsForFit(ctx: AiCtx, r: { photo?: string; outfit?: string; taste: string; profile: StyleProfile; avoid?: string[] }) {
+  const system = `You pick music for Instagram outfit posts. Match the songs to the outfit's vibe (colours, how dressed-up it is, the feel) and to the person's music taste.
+Rules:
+- Only suggest real, well-known songs you are confident exist, with the exact title and main artist. Prefer popular tracks that are likely to be in Instagram's music library. Never invent songs.
+- Give 5 songs, a mix of safe picks and one or two less obvious ones.
+- Keep songs clean enough to post publicly.
+- Use everyday words, no fashion jargon. No markdown, no emoji in titles.`;
+  const text = `${r.outfit ? `The outfit: ${r.outfit}\n` : ''}Their music taste: ${r.taste.trim() || 'not specified — pick broadly popular songs'}
+${r.profile.name ? `Name: ${r.profile.name}\n` : ''}${r.avoid?.length ? `Already suggested, pick different ones: ${r.avoid.join('; ')}\n` : ''}Suggest songs and captions for posting this outfit.`;
+  const content: Anthropic.Beta.BetaContentBlockParam[] = r.photo ? [imageBlock(r.photo), { type: 'text', text }] : [{ type: 'text', text }];
+  return ask(ctx, system, [{ role: 'user', content }], SongSchema, 'medium', 4000);
+}
+
 // ---------- Packing ----------
 
 const PackSchema = z.object({

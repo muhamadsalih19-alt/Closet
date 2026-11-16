@@ -10,6 +10,7 @@ import { remember } from '../lib/memory';
 import { OCCASION_INFO, OCCASION_ORDER, type Suggestion } from '../lib/types';
 import { Empty, ErrorNote, OutfitBoard, Spinner } from '../components/ui';
 import SuggestionCard from '../components/SuggestionCard';
+import SongForFit from '../components/SongForFit';
 
 const CACHE = 'drape-today';
 
@@ -36,6 +37,7 @@ export default function Today() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [missing, setMissing] = useState('');
+  const [songFor, setSongFor] = useState<string[] | null>(null);
 
   useEffect(() => {
     try {
@@ -112,6 +114,7 @@ export default function Today() {
         <section className="card">
           <div className="row between"><h3>Today’s outfit</h3><span className="pill good">Logged</span></div>
           <OutfitBoard itemIds={worn.itemIds} onItem={(id) => open({ kind: 'item', id })} />
+          {ai.apiKey && <button className="btn small" onClick={() => setSongFor(worn.itemIds)}>🎵 Song for this fit (Instagram)</button>}
         </section>
       )}
 
@@ -168,6 +171,7 @@ export default function Today() {
 
       {list.map((s, i) => <SuggestionCard key={i + s.itemIds.join()} s={s} occasion={occasion} />)}
       {list.length > 0 && !busy && <button className="btn" onClick={() => styleMe(true)}>Show me more</button>}
+      {songFor && <SongForFit itemIds={songFor} onClose={() => setSongFor(null)} />}
     </div>
   );
 }
