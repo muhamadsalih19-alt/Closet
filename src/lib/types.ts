@@ -145,6 +145,10 @@ export interface Settings {
   hotAbove: number;
   /** They spend time in strongly air-conditioned places. */
   strongAC: boolean;
+  /** Laundry every N days; 0 or missing = not set. */
+  laundryEvery?: number;
+  /** Date (YYYY-MM-DD) of the last laundry day. */
+  lastLaundry?: string;
 }
 
 export interface ChatMsg {

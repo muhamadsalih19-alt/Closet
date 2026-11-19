@@ -135,7 +135,7 @@ const STYLIST = `You are Drape, a warm, decisive personal stylist who dresses th
 Rules:
 - Only use clothing from the closet catalogue, referring to items by their exact id. Never invent ids.
 - A complete outfit covers the body: a dress or one-piece, or a top plus a bottom; plus shoes. Add outerwear when it is cool, windy or wet, and a bag or accessory when it lifts the look.
-- Never pick items marked IN LAUNDRY.
+- Never pick items marked IN LAUNDRY. If they tell you how often they do laundry, plan around it so outfits are not repeated too much.
 - Dress for the occasion. Match formality across pieces unless the contrast is deliberate.
 - Dress for how the weather feels to THEM, as described with the weather below, not for general temperature rules: they may be used to heat, so 27°C can be cool for them. When no weather is given, every piece is available. Never rule out jackets, long sleeves or trousers just because a number looks warm.
 - Follow their notes. Their standing notes come with their profile, and some pieces carry a styling note (for example a short-sleeve shirt that can be worn open over a t-shirt like a light jacket). Use pieces that way when it suits the outfit, and say so in the styling tip.
@@ -192,6 +192,7 @@ export interface OutfitRequest {
   profile: StyleProfile;
   occasion: string;
   weather?: string;
+  laundry?: string;
   date: string;
   extra?: string;
   anchorId?: string;
@@ -209,7 +210,7 @@ export async function suggestOutfits(ctx: AiCtx, r: OutfitRequest): Promise<{ ou
   const avoid = r.avoid?.length ? `\nDo not repeat these combinations: ${r.avoid.map((a) => a.join('+')).join('; ')}` : '';
   const content = `Date: ${r.date}
 Occasion: ${occasionForAi(r.occasion)}
-${r.weather ? `Weather: ${r.weather}\n` : ''}${r.extra ? `Extra request: ${r.extra}\n` : ''}
+${r.weather ? `Weather: ${r.weather}\n` : ''}${r.laundry ? `Laundry: ${r.laundry}\n` : ''}${r.extra ? `Extra request: ${r.extra}\n` : ''}
 Style profile:
 ${profileBrief(r.profile)}
 
@@ -241,11 +242,11 @@ const WeekSchema = z.object({
 
 export async function planWeek(
   ctx: AiCtx,
-  r: Omit<OutfitRequest, 'occasion' | 'date' | 'weather'> & { days: { date: string; occasion: string; weather?: string }[] },
+  r: Omit<OutfitRequest, 'occasion' | 'date' | 'weather'> & { days: { date: string; occasion: string; weather?: string }[]; laundryPlan?: string },
 ) {
   const content = `Plan one outfit per day. Avoid repeating the same main pieces on back-to-back days, but re-wearing jeans or shoes across the week is fine.
 
-Days:
+${r.laundryPlan ? `Laundry: ${r.laundryPlan}\n\n` : ''}Days:
 ${r.days.map((d) => `${d.date} — ${occasionForAi(d.occasion)}${d.weather ? ` — ${d.weather}` : ''}`).join('\n')}
 
 Style profile:
@@ -270,11 +271,11 @@ const ChatSchema = z.object({
   remember: z.array(z.string()).describe('Lasting likes, dislikes or rules they just told you, each as one short clear note, e.g. "For desert trips: avoid light colours and fabrics that show dirt easily". Empty if they did not state one, or if it is already in what they have told you.'),
 });
 
-export async function chat(ctx: AiCtx, history: ChatMsg[], items: Item[], wears: WearLog[], profile: StyleProfile, weather?: string) {
+export async function chat(ctx: AiCtx, history: ChatMsg[], items: Item[], wears: WearLog[], profile: StyleProfile, weather?: string, laundry?: string) {
   const system = `${STYLIST}
 
 You are chatting with them about style. You can propose outfits from their closet, explain what goes with what, give shopping advice for gaps, help them pack, or talk about trends. When you propose an outfit, put it in outfits. When you mention individual pieces, list their ids in item_ids. When they tell you something lasting about what they like, dislike or want (for an occasion, a colour, a fit, a piece), put it in remember so you keep it for next time, and briefly confirm you will remember it.
-${weather ? `\nToday's weather: ${weather}\n` : ''}
+${weather ? `\nToday's weather: ${weather}\n` : ''}${laundry ? `\nLaundry: ${laundry}\n` : ''}
 
 Style profile:
 ${profileBrief(profile)}

@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react';
 import { useStore } from '../state';
 import { useNav } from '../nav';
 import { auditCloset, friendlyError, testKey, wearStats, MODELS, type AuditResult } from '../lib/ai';
-import { clearAll, dayKey, addDays, exportBackup, parseBackup } from '../lib/storage';
+import { clearAll, dayKey, addDays, exportBackup, parseBackup, parseDay } from '../lib/storage';
 import { CATEGORIES, CATEGORY_LABEL, type StyleProfile } from '../lib/types';
 import { Chip, ErrorNote, ItemPhoto, Spinner, shopUrl } from '../components/ui';
 import { STYLE_OPTIONS } from './Welcome';
 import LocationPicker from '../components/LocationPicker';
 import { describe, feelFor, fmtTemp, FEEL_LABEL } from '../lib/weather';
+import { laundryCycle, hamperIds } from '../lib/laundry';
 
 type View = 'insights' | 'profile' | 'settings';
 
@@ -291,6 +292,8 @@ function SettingsView() {
       </section>
 
 
+      <Laundry />
+
       <section className="card stack-sm">
         <h3>Weather</h3>
         <p className="muted small">Optional. Your stylist checks the forecast, but judges it by what feels cool or hot <em>to you</em>, not by general rules.</p>
@@ -348,5 +351,52 @@ function SettingsView() {
 
       <p className="muted small center">Drape · build {__BUILD__} · free and open, no paywall.</p>
     </div>
+  );
+}
+
+const LAUNDRY_OPTIONS = [
+  { days: 0, label: 'Not set' },
+  { days: 1, label: 'Every day' },
+  { days: 2, label: 'Every 2 days' },
+  { days: 3, label: 'Every 3 days' },
+  { days: 4, label: 'Every 4 days' },
+  { days: 7, label: 'Once a week' },
+  { days: 14, label: 'Every 2 weeks' },
+];
+
+function Laundry() {
+  const { data, update } = useStore();
+  const s = data.settings;
+  const today = dayKey();
+  const every = s.laundryEvery ?? 0;
+  const set = (p: Partial<typeof s>) => update((d) => ({ ...d, settings: { ...d.settings, ...p } }));
+  const cycle = laundryCycle(s, today);
+  const inWash = hamperIds(data.items, data.wears, s, today).size;
+  const day = (k: string) => parseDay(k).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' });
+  return (
+    <section className="card stack-sm">
+      <h3>Laundry</h3>
+      <p className="muted small">How often do you do laundry? Tops, dresses and gym clothes you wear wait for laundry day before they’re suggested again. Jeans, jackets and shoes can be re-worn, just not too often.</p>
+      <div className="chips">
+        {LAUNDRY_OPTIONS.map((o) => (
+          <Chip key={o.days} on={every === o.days} onClick={() => set({ laundryEvery: o.days, lastLaundry: o.days ? s.lastLaundry || today : s.lastLaundry })}>{o.label}</Chip>
+        ))}
+      </div>
+      {every > 0 && (
+        <>
+          <label className="field">
+            <span>When did you last do laundry?</span>
+            <input type="date" value={s.lastLaundry || today} max={today} onChange={(e) => e.target.value && set({ lastLaundry: e.target.value })} />
+          </label>
+          {cycle && (
+            <div className="note small">
+              🧺 Next laundry day: {cycle.daysLeft === 0 ? 'today' : day(cycle.next)}
+              {inWash > 0 ? ` · ${inWash} ${inWash === 1 ? 'piece' : 'pieces'} in the wash` : ' · nothing in the wash'}
+            </div>
+          )}
+          <button className="btn small" onClick={() => set({ lastLaundry: today })}>I did laundry today</button>
+        </>
+      )}
+    </section>
   );
 }

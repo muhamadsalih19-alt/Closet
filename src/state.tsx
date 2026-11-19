@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { EMPTY, loadData, loadImages, saveData, saveImage, deleteImage, type AppData } from './lib/storage';
 import type { AiCtx } from './lib/ai';
+import { hamperIds, laundryCycle, laundryForAi, withHamper, type LaundryCycle } from './lib/laundry';
+import type { Item } from './lib/types';
 import { feelFor, fetchWeather, weatherForAi, type DayWeather, type Feel, type Weather } from './lib/weather';
 
 interface Store {
@@ -112,5 +114,17 @@ export function useDayWeather(date: string): { day: DayWeather | undefined; feel
     feel: feelFor(day, data.settings),
     forAi: weatherForAi(day, data.settings, isToday ? weather?.now : undefined),
     strongAC: data.settings.strongAC,
+  };
+}
+
+/** The closet as it stands on a date: pieces waiting for laundry day are marked unavailable. */
+export function useLaundry(date: string): { items: Item[]; hamper: Set<string>; cycle: LaundryCycle | null; forAi: string | undefined } {
+  const { data } = useStore();
+  const hamper = hamperIds(data.items, data.wears, data.settings, date);
+  return {
+    items: withHamper(data.items, hamper),
+    hamper,
+    cycle: laundryCycle(data.settings, date),
+    forAi: laundryForAi(data.items, data.wears, data.settings, date),
   };
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useStore, useDayWeather } from '../state';
+import { useStore, useDayWeather, useLaundry } from '../state';
 import { useNav } from '../nav';
 import { chat, glowUp, outfitFinder, packTrip, friendlyError, type FinderResult, type GlowResult, type PackResult } from '../lib/ai';
 import { fileToDataUrl } from '../lib/images';
@@ -110,6 +110,7 @@ const STARTERS = [
 function Chat() {
   const { data, update, ai } = useStore();
   const wx = useDayWeather(dayKey());
+  const lx = useLaundry(dayKey());
   const { open } = useNav();
   const [text, setText] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -132,7 +133,7 @@ function Chat() {
     setPhoto(null);
     setBusy(true);
     try {
-      const r = await chat(ai, history, data.items, data.wears, data.profile, wx.forAi);
+      const r = await chat(ai, history, lx.items, data.wears, data.profile, wx.forAi, lx.forAi);
       update((d) => remember({ ...d, chat: [...d.chat, { role: 'assistant' as const, text: r.reply, itemIds: r.itemIds, outfits: r.outfits, remembered: r.remember }].slice(-40) }, r.remember));
     } catch (e) {
       setErr(friendlyError(e));

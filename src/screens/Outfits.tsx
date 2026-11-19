@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useStore, useDayWeather } from '../state';
+import { useStore, useDayWeather, useLaundry } from '../state';
+import { laundryDaysBetween } from '../lib/laundry';
 import { describe, feelFor, fmtTemp, weatherForAi, FEEL_LABEL } from '../lib/weather';
 import { useNav } from '../nav';
 import { planWeek, suggestOutfits, friendlyError } from '../lib/ai';
@@ -148,6 +149,7 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
   const plan = data.plans.find((p) => p.date === date);
   const past = date < dayKey();
   const wx = useDayWeather(date);
+  const lx = useLaundry(date);
   const label = parseDay(date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
   const styleDay = async () => {
@@ -155,8 +157,8 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
     setBusy(true);
     try {
       const s = ai.apiKey
-        ? (await suggestOutfits(ai, { items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile, occasion: occ, weather: wx.forAi, date, count: 1 })).outfits[0]
-        : localOutfits(data.items, data.wears, occ, 1, undefined, wx.feel, wx.strongAC)[0];
+        ? (await suggestOutfits(ai, { items: lx.items, wears: data.wears, feedback: data.feedback, profile: data.profile, occasion: occ, weather: wx.forAi, laundry: lx.forAi, date, count: 1 })).outfits[0]
+        : localOutfits(lx.items, data.wears, occ, 1, undefined, wx.feel, wx.strongAC)[0];
       if (!s) throw new Error('Add more clothes to your closet first.');
       update((d) => setPlan(d, date, s.itemIds, s.title, s.why));
     } catch (e) {
@@ -229,6 +231,7 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
 function WeekSheet({ onClose }: { onClose: () => void }) {
   const { data, update, ai, toast, weather } = useStore();
   const today = dayKey();
+  const lx = useLaundry(today);
   const dates = Array.from({ length: 7 }, (_, i) => addDays(today, i));
   const [occs, setOccs] = useState<string[]>(() => dates.map((d) => ([0, 6].includes(parseDay(d).getDay()) ? 'Everyday' : data.profile.lifestyle.toLowerCase().includes('office') ? 'Work' : 'Everyday')));
   const [busy, setBusy] = useState(false);
@@ -240,7 +243,10 @@ function WeekSheet({ onClose }: { onClose: () => void }) {
     try {
       const days = dates.map((date, i) => ({ date, occasion: occs[i], weather: weatherForAi(weather?.days.find((d) => d.date === date), data.settings) }));
       if (ai.apiKey) {
-        const plan = await planWeek(ai, { items: data.items, wears: data.wears, feedback: data.feedback, profile: data.profile, days });
+        const plan = await planWeek(ai, {
+          items: lx.items, wears: data.wears, feedback: data.feedback, profile: data.profile, days,
+          laundryPlan: lx.forAi && `${lx.forAi} Laundry days during this plan: ${laundryDaysBetween(data.settings, today, 7).join(', ') || 'none'}. Use each top or dress at most once between laundry days.`,
+        });
         update((d) => plan.reduce((acc, p) => (p.item_ids.length ? setPlan(acc, p.date, p.item_ids, p.title, p.note) : acc), d));
       } else {
         update((d) => days.reduce((acc, day) => {

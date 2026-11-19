@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useStore, useDayWeather } from '../state';
+import { useStore, useDayWeather, useLaundry } from '../state';
 import { describe, fmtTemp, FEEL_LABEL } from '../lib/weather';
 import { useNav } from '../nav';
 import { suggestOutfits, friendlyError } from '../lib/ai';
@@ -28,6 +28,7 @@ export default function Today() {
   const { open, go } = useNav();
   const today = dayKey();
   const wx = useDayWeather(today);
+  const lx = useLaundry(today);
   const unit = data.settings.tempUnit;
   const cached = useMemo(readCache, []);
   const [occasion, setOccasion] = useState(cached?.occasion ?? 'Everyday');
@@ -59,12 +60,13 @@ export default function Today() {
     setBusy(true);
     try {
       if (!ai.apiKey) {
-        const res = localOutfits(data.items, data.wears, occasion, 3, undefined, wx.feel, wx.strongAC);
+        const res = localOutfits(lx.items, data.wears, occasion, 3, undefined, wx.feel, wx.strongAC);
         if (!res.length) setErr('Add a few tops, bottoms and shoes to your closet first.');
         setList(more ? [...list, ...res] : res);
       } else {
         const res = await suggestOutfits(ai, {
-          items: data.items,
+          items: lx.items,
+          laundry: lx.forAi,
           wears: data.wears,
           feedback: data.feedback,
           profile: data.profile,
@@ -134,6 +136,12 @@ export default function Today() {
         </Empty>
       ) : (
         <section className="stack-sm">
+          {lx.cycle && (
+            <button className="laundry-line" onClick={() => go('closet')}>
+              🧺 {lx.cycle.daysLeft === 0 ? 'Laundry day today' : `Laundry in ${lx.cycle.daysLeft} day${lx.cycle.daysLeft === 1 ? '' : 's'}`}
+              {lx.hamper.size > 0 && ` · ${lx.hamper.size} ${lx.hamper.size === 1 ? 'piece' : 'pieces'} in the wash`}
+            </button>
+          )}
           <h2>Where are you going today?</h2>
           <p className="muted small">Pick the one closest to your day.</p>
           <div className="occasions" role="radiogroup" aria-label="Where are you going today?">

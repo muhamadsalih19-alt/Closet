@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useStore } from '../state';
+import { useStore, useLaundry } from '../state';
+import { dayKey } from '../lib/storage';
 import { useNav } from '../nav';
 import { wearStats } from '../lib/ai';
 import { CATEGORIES, CATEGORY_LABEL, type ItemStatus } from '../lib/types';
@@ -15,8 +16,10 @@ export default function Closet() {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<Sort>('new');
   const stats = useMemo(() => wearStats(data.wears), [data.wears]);
+  const lx = useLaundry(dayKey());
 
-  const inStatus = data.items.filter((i) => i.status === status);
+  // Pieces waiting for laundry day show as in the laundry, alongside ones marked by hand.
+  const inStatus = lx.items.filter((i) => i.status === status);
   const counts = Object.fromEntries(CATEGORIES.map((c) => [c, inStatus.filter((i) => i.category === c).length]));
   const needle = q.trim().toLowerCase();
   const shown = inStatus
@@ -28,7 +31,7 @@ export default function Closet() {
       if (sort === 'name') return a.name.localeCompare(b.name);
       return b.createdAt - a.createdAt;
     });
-  const laundry = data.items.filter((i) => i.inLaundry).length;
+  const laundry = lx.items.filter((i) => i.status === 'owned' && i.inLaundry).length;
 
   return (
     <div className="stack">
@@ -67,7 +70,7 @@ export default function Closet() {
           </select>
         </label>
         {laundry > 0 && status === 'owned' && (
-          <button className="link small" onClick={() => { update((d) => ({ ...d, items: d.items.map((i) => ({ ...i, inLaundry: false })) })); toast('Laundry done — everything is back'); }}>
+          <button className="link small" onClick={() => { update((d) => ({ ...d, items: d.items.map((i) => ({ ...i, inLaundry: false })), settings: d.settings.laundryEvery ? { ...d.settings, lastLaundry: dayKey() } : d.settings })); toast('Laundry done — everything is back'); }}>
             Laundry done
           </button>
         )}

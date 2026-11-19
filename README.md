@@ -19,6 +19,9 @@ data stay on your phone.
   everything it remembers in the Stylist tab.
 - **Notes for your stylist:** standing notes in your style profile ("no shorts to family visits"), plus tips on any
   piece ("can be worn open over a t-shirt like a light jacket"). The stylist follows both.
+- **Laundry schedule:** set how often you do laundry (e.g. every 3 days) and when you last did. Tops, dresses and
+  gym clothes you wear wait for laundry day; jeans, jackets and shoes can be re-worn but are spread out. Works in
+  daily picks, planning, chat and the offline picker; "Laundry done" or "I did laundry today" resets it.
 - **Style this piece:** complete looks built around any item.
 - **Outfits and planner:** saved looks, an outfit builder, a monthly calendar of what you wore and what's planned,
   and **Plan my week**, which plans seven days around the forecast as it feels to you.

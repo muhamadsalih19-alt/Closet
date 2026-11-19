@@ -288,3 +288,5 @@ ul.clean { margin: 0; padding-left: 18px; display: flex; flex-direction: column;
 .remembered span { font-size: 13px; background: var(--brand-soft); color: var(--text); padding: 6px 10px; border-radius: 10px; }
 
 .song { gap: 6px; }
+
+.laundry-line { align-self: flex-start; font-size: 13px; color: var(--muted); background: var(--surface-2); padding: 6px 12px; border-radius: 99px; }
