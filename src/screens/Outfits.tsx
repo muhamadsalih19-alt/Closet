@@ -6,7 +6,7 @@ import { useNav } from '../nav';
 import { planWeek, suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
 import { addDays, dayKey, parseDay } from '../lib/storage';
-import { logWear, setPlan } from '../lib/actions';
+import { logWear, removeWear, setPlan, wearsOn } from '../lib/actions';
 import { OCCASION_ORDER, occasionLabel } from '../lib/types';
 import { Chip, Empty, ErrorNote, ItemPhoto, OutfitBoard, Sheet, Spinner, useShareOutfit } from '../components/ui';
 
@@ -39,7 +39,7 @@ function Saved() {
   const { data, update, toast } = useStore();
   const { open } = useNav();
   const share = useShareOutfit();
-  const todays = data.wears.find((w) => w.date === dayKey());
+  const todays = wearsOn(data, dayKey());
   const sameItems = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
   const [occ, setOcc] = useState('all');
   const occs = Array.from(new Set(data.outfits.map((o) => o.occasion).filter(Boolean)));
@@ -70,15 +70,14 @@ function Saved() {
             </button>
           </div>
           <OutfitBoard itemIds={o.itemIds} onItem={(id) => open({ kind: 'item', id })} />
-          {todays && sameItems(todays.itemIds, o.itemIds) ? (
+          {todays.some((w) => sameItems(w.itemIds, o.itemIds)) ? (
             <div className="note good small">✓ You’re wearing this today</div>
           ) : (
             <button
               className="btn primary"
               onClick={() => {
-                if (todays && !confirm('You already logged an outfit today. Replace it with this one?')) return;
                 update((d) => logWear(d, o.itemIds, dayKey(), o.occasion, o.id));
-                toast('Logged as today’s outfit');
+                toast(todays.length ? 'Added as another outfit today' : 'Logged as today’s outfit');
               }}
             >
               Wear this today
@@ -119,7 +118,8 @@ function Planner() {
         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <div key={i} className="cal-head">{d}</div>)}
         {cells.map((c, i) => {
           if (!c) return <div key={i} />;
-          const wear = data.wears.find((w) => w.date === c);
+          const dayWears = wearsOn(data, c);
+          const wear = dayWears[0];
           const plan = data.plans.find((p) => p.date === c);
           const ids = wear?.itemIds ?? plan?.itemIds ?? [];
           const pieces = ids.map((x) => data.items.find((it) => it.id === x)).filter((it) => !!it);
@@ -128,6 +128,7 @@ function Planner() {
             <button key={i} className={'cal-day' + (c === today ? ' today' : '') + (wear ? ' worn' : plan ? ' planned' : '')} onClick={() => setDay(c)}>
               <span className="cal-num">{+c.slice(8)}</span>
               {lead && <ItemPhoto item={lead} size="sm" />}
+              {dayWears.length > 1 && <span className="cal-count">{dayWears.length}</span>}
             </button>
           );
         })}
@@ -145,7 +146,8 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
   const [occ, setOcc] = useState('Everyday');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const wear = data.wears.find((w) => w.date === date);
+  const dayWears = wearsOn(data, date);
+  const wear = dayWears[0];
   const plan = data.plans.find((p) => p.date === date);
   const past = date < dayKey();
   const wx = useDayWeather(date);
@@ -176,13 +178,13 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
             {describe(wx.day.code).icon} High {fmtTemp(wx.day.max, data.settings.tempUnit)}{wx.feel ? ` · ${FEEL_LABEL[wx.feel]}` : ''}
           </p>
         )}
-        {wear && (
-          <div className="card">
-            <h3>Worn</h3>
-            <OutfitBoard itemIds={wear.itemIds} onItem={(id) => open({ kind: 'item', id })} />
-            <button className="btn small" onClick={() => update((d) => ({ ...d, wears: d.wears.filter((w) => w.date !== date) }))}>Remove log</button>
+        {dayWears.map((w, i) => (
+          <div key={w.id} className="card">
+            <h3>{dayWears.length > 1 ? `Worn · outfit ${i + 1}` : 'Worn'}{w.occasion ? ` · ${occasionLabel(w.occasion)}` : ''}</h3>
+            <OutfitBoard itemIds={w.itemIds} onItem={(id) => open({ kind: 'item', id })} />
+            <button className="btn small" onClick={() => update((d) => removeWear(d, w.id))}>Remove this outfit</button>
           </div>
-        )}
+        ))}
         {plan && (
           <div className="card">
             <h3>Planned: {plan.title}</h3>
@@ -208,7 +210,7 @@ function DaySheet({ date, onClose }: { date: string; onClose: () => void }) {
         )}
         {data.outfits.length > 0 && (
           <div className="stack-sm">
-            <h3>{past ? 'Log a saved outfit' : 'Or choose a saved outfit'}</h3>
+            <h3>{past ? (dayWears.length ? 'Log another saved outfit' : 'Log a saved outfit') : 'Or choose a saved outfit'}</h3>
             {data.outfits.slice(0, 12).map((o) => (
               <button
                 key={o.id}

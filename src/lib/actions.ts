@@ -1,10 +1,28 @@
 import { dayKey, uid, type AppData } from './storage';
 import type { Outfit } from './types';
 
+const sameItems = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+
+/** Logs an outfit as worn on a date. A day can have several outfits; logging the exact same one twice does nothing. */
 export function logWear(d: AppData, itemIds: string[], date = dayKey(), occasion = '', outfitId: string | null = null): AppData {
-  const rest = d.wears.filter((w) => w.date !== date);
-  return { ...d, wears: [...rest, { id: uid(), date, itemIds, occasion, outfitId }].sort((a, b) => a.date.localeCompare(b.date)) };
+  if (d.wears.some((w) => w.date === date && sameItems(w.itemIds, itemIds))) return d;
+  // stable sort keeps same-day outfits in the order they were logged
+  return { ...d, wears: [...d.wears, { id: uid(), date, itemIds, occasion, outfitId }].sort((a, b) => a.date.localeCompare(b.date)) };
 }
+
+export function removeWear(d: AppData, wearId: string): AppData {
+  return { ...d, wears: d.wears.filter((w) => w.id !== wearId) };
+}
+
+/** Adds one piece to a logged outfit (or starts a new one if there is none that day). */
+export function addToLatestWear(d: AppData, itemId: string, date = dayKey()): AppData {
+  const latest = d.wears.filter((w) => w.date === date).at(-1);
+  if (!latest) return logWear(d, [itemId], date);
+  if (latest.itemIds.includes(itemId)) return d;
+  return { ...d, wears: d.wears.map((w) => (w.id === latest.id ? { ...w, itemIds: [...w.itemIds, itemId] } : w)) };
+}
+
+export const wearsOn = (d: AppData, date: string) => d.wears.filter((w) => w.date === date);
 
 export function saveOutfit(d: AppData, o: Omit<Outfit, 'id' | 'createdAt' | 'favorite'> & { id?: string }): AppData {
   if (o.id && d.outfits.some((x) => x.id === o.id)) {

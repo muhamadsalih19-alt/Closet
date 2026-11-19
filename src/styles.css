@@ -212,7 +212,7 @@ select.inline { width: auto; padding: 6px 10px; font-size: 14px; }
 
 .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .cal-head { text-align: center; font-size: 12px; color: var(--muted); padding: 4px 0; }
-.cal-day { aspect-ratio: 0.8; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px; overflow: hidden; }
+.cal-day { position: relative; aspect-ratio: 0.8; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 3px; overflow: hidden; }
 .cal-day .photo.sm { width: 100%; height: auto; border: none; }
 .cal-day.today { border-color: var(--brand); border-width: 2px; }
 .cal-day.planned { border-style: dashed; border-color: var(--brand); }
@@ -290,3 +290,5 @@ ul.clean { margin: 0; padding-left: 18px; display: flex; flex-direction: column;
 .song { gap: 6px; }
 
 .laundry-line { align-self: flex-start; font-size: 13px; color: var(--muted); background: var(--surface-2); padding: 6px 12px; border-radius: 99px; }
+
+.cal-count { position: absolute; bottom: 3px; right: 3px; font-size: 10px; font-weight: 700; background: var(--accent); color: var(--accent-ink); border-radius: 99px; min-width: 16px; height: 16px; display: grid; place-items: center; padding: 0 4px; }

@@ -51,7 +51,7 @@ export default function OutfitEditor({ id, itemIds, name, occasion }: { id?: str
           {owned.filter((i) => i.category === cat).map((i) => <ItemTile key={i.id} item={i} selected={sel.includes(i.id)} onClick={() => toggle(i.id)} />)}
         </div>
 
-        <button className="btn primary big" disabled={!sel.length} onClick={() => { update((d) => logWear(d, sel, dayKey(), occ, existing?.id ?? null)); toast('Logged as today’s outfit'); }}>
+        <button className="btn primary big" disabled={!sel.length} onClick={() => { update((d) => logWear(d, sel, dayKey(), occ, existing?.id ?? null)); toast('Added to today’s outfits'); }}>
           Wear this today
         </button>
         <div className="row wrap">

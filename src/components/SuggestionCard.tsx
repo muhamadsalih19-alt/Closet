@@ -30,7 +30,7 @@ export default function SuggestionCard({ s, occasion, onWear }: { s: Suggestion;
           className="btn primary grow"
           onClick={() => {
             update((d) => logWear(d, s.itemIds, undefined, occasion));
-            toast('Logged as today’s outfit');
+            toast('Added to today’s outfits');
             onWear?.();
           }}
         >

@@ -11,7 +11,7 @@ const youtube = (q: string) => `https://www.youtube.com/results?search_query=${e
 /** Suggests songs (and captions) for posting an outfit on Instagram. */
 export default function SongForFit({ onClose, itemIds }: { onClose: () => void; itemIds?: string[] }) {
   const { data, update, ai, toast } = useStore();
-  const todays = data.wears.find((w) => w.date === dayKey());
+  const todays = data.wears.filter((w) => w.date === dayKey()).at(-1);
   const [photo, setPhoto] = useState<string | null>(null);
   const [useIds, setUseIds] = useState<string[] | null>(itemIds ?? null);
   const [taste, setTaste] = useState(data.profile.musicTaste ?? '');

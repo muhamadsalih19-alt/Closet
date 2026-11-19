@@ -5,7 +5,8 @@ import { useNav } from '../nav';
 import { suggestOutfits, friendlyError } from '../lib/ai';
 import { localOutfits } from '../lib/local';
 import { dayKey } from '../lib/storage';
-import { logWear } from '../lib/actions';
+import { logWear, removeWear, wearsOn } from '../lib/actions';
+import { occasionLabel } from '../lib/types';
 import { remember } from '../lib/memory';
 import { OCCASION_INFO, OCCASION_ORDER, type Suggestion } from '../lib/types';
 import { Empty, ErrorNote, OutfitBoard, Spinner } from '../components/ui';
@@ -50,7 +51,8 @@ export default function Today() {
 
   const owned = data.items.filter((i) => i.status === 'owned');
   const plan = data.plans.find((p) => p.date === today);
-  const worn = data.wears.find((w) => w.date === today);
+  const wornToday = wearsOn(data, today);
+  const worn = wornToday.at(-1);
   const hour = new Date().getHours();
   const hello = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
@@ -112,20 +114,27 @@ export default function Today() {
       )}
 
 
-      {worn && (
-        <section className="card">
-          <div className="row between"><h3>Today’s outfit</h3><span className="pill good">Logged</span></div>
-          <OutfitBoard itemIds={worn.itemIds} onItem={(id) => open({ kind: 'item', id })} />
-          {ai.apiKey && <button className="btn small" onClick={() => setSongFor(worn.itemIds)}>🎵 Song for this fit (Instagram)</button>}
+      {wornToday.map((w, i) => (
+        <section key={w.id} className="card">
+          <div className="row between">
+            <h3>{wornToday.length > 1 ? `Today’s outfit ${i + 1}` : 'Today’s outfit'}</h3>
+            <span className="row">
+              <span className="pill good">{w.occasion ? occasionLabel(w.occasion) : 'Logged'}</span>
+              <button className="icon-btn" aria-label="Remove this outfit from today" onClick={() => { if (confirm('Remove this outfit from today?')) update((d) => removeWear(d, w.id)); }}>✕</button>
+            </span>
+          </div>
+          <OutfitBoard itemIds={w.itemIds} onItem={(id) => open({ kind: 'item', id })} />
+          {ai.apiKey && <button className="btn small" onClick={() => setSongFor(w.itemIds)}>🎵 Song for this fit (Instagram)</button>}
         </section>
-      )}
+      ))}
+      {wornToday.length > 0 && <p className="muted small center">Changing later? Pick another outfit below and tap “Wear this today” — it’s added as another outfit for today.</p>}
 
       {plan && !worn && (
         <section className="card">
           <div className="row between"><h3>Planned for today</h3><span className="pill">{plan.title}</span></div>
           <OutfitBoard itemIds={plan.itemIds} onItem={(id) => open({ kind: 'item', id })} />
           {plan.note && <p className="muted small">{plan.note}</p>}
-          <button className="btn primary" onClick={() => { update((d) => logWear(d, plan.itemIds)); toast('Logged as today’s outfit'); }}>Wear this today</button>
+          <button className="btn primary" onClick={() => { update((d) => logWear(d, plan.itemIds)); toast('Added to today’s outfits'); }}>Wear this today</button>
         </section>
       )}
 

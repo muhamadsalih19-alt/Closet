@@ -4,7 +4,7 @@ import { useNav } from '../nav';
 import { wearStats } from '../lib/ai';
 import { fileToDataUrl } from '../lib/images';
 import { dayKey, parseDay } from '../lib/storage';
-import { logWear } from '../lib/actions';
+import { addToLatestWear } from '../lib/actions';
 import type { Item } from '../lib/types';
 import { ItemPhoto, PhotoButton, Sheet, shopUrl } from '../components/ui';
 import ItemForm from '../components/ItemForm';
@@ -22,10 +22,7 @@ export default function ItemDetail({ id }: { id: string }) {
   const cpw = item.price != null && stats?.count ? item.price / stats.count : null;
 
   const wearToday = () => {
-    const today = dayKey();
-    const existing = data.wears.find((w) => w.date === today);
-    const ids = Array.from(new Set([...(existing?.itemIds ?? []), id]));
-    update((d) => logWear(d, ids, today, existing?.occasion ?? '', existing?.outfitId ?? null));
+    update((d) => addToLatestWear(d, id, dayKey()));
     toast('Added to today’s outfit');
   };
 
